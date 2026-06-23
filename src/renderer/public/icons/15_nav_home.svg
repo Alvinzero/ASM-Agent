@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none" role="img" aria-label="home navigation icon">
+<title>home navigation icon</title>
+<defs>
+  <linearGradient id="home_bg" x1="42" y1="30" x2="216" y2="236" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FFFFFF" stop-opacity=".95"/>
+    <stop offset="1" stop-color="#1B62E8" stop-opacity=".16"/>
+  </linearGradient>
+  <radialGradient id="home_halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(128 130) rotate(90) scale(84)">
+    <stop stop-color="#1B62E8" stop-opacity=".23"/>
+    <stop offset=".55" stop-color="#1B62E8" stop-opacity=".10"/>
+    <stop offset="1" stop-color="#1B62E8" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="home_circle" x1="86" y1="78" x2="170" y2="178" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#1B62E8"/>
+    <stop offset="1" stop-color="#0B57E3"/>
+  </linearGradient>
+  <filter id="home_shadow" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
+    <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#1B62E8" flood-opacity=".20"/>
+    <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#0F172A" flood-opacity=".10"/>
+  </filter>
+  <filter id="home_soft" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+    <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#0B3A91" flood-opacity=".14"/>
+  </filter>
+</defs>
+
+<circle cx="128" cy="128" r="86" fill="#EEF5FF" filter="url(#home_soft)"/>
+<path d="M55 129l73-62 73 62" stroke="#1B62E8" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M79 121v69h98v-69l-49-41-49 41z" fill="#1B62E8"/>
+<path d="M114 190v-42h28v42" fill="#fff" opacity=".96"/>
+
+</svg>

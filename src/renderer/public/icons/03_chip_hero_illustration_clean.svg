@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="631" viewBox="0 0 900 631" fill="none" role="img" aria-label="HK8S8100X chip hero illustration">
+<title>HK8S8100X chip hero illustration</title>
+<defs>
+  <linearGradient id="base" x1="179" y1="362" x2="727" y2="527" gradientUnits="userSpaceOnUse"><stop stop-color="#EAF4FF"/><stop offset="1" stop-color="#BFDFFF"/></linearGradient>
+  <linearGradient id="chipFace" x1="335" y1="119" x2="623" y2="352" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#EEF5FF"/></linearGradient>
+  <linearGradient id="chipEdge" x1="356" y1="349" x2="676" y2="461" gradientUnits="userSpaceOnUse"><stop stop-color="#0B3A91"/><stop offset="1" stop-color="#3AA6FF"/></linearGradient>
+  <filter id="blurGlow" x="0" y="0" width="900" height="631" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="20" result="b"/><feBlend in="SourceGraphic" in2="b"/></filter>
+  <filter id="chipShadow" x="150" y="60" width="600" height="470"><feDropShadow dx="0" dy="28" stdDeviation="22" flood-color="#0B3A91" flood-opacity=".28"/></filter>
+</defs>
+<rect width="900" height="631" fill="transparent"/>
+<ellipse cx="455" cy="462" rx="335" ry="92" fill="#D7EAFF" opacity=".55"/>
+<ellipse cx="455" cy="458" rx="250" ry="64" fill="url(#base)" opacity=".92"/>
+<path d="M161 394c105 51 493 51 596 0" stroke="#2EA8FF" stroke-opacity=".28" stroke-width="5"/>
+<path d="M126 430c136 78 526 77 657 0" stroke="#2EA8FF" stroke-opacity=".16" stroke-width="3"/>
+<g opacity=".55" stroke="#7CCEFF" stroke-width="3" stroke-linecap="round">
+  <path d="M108 239h130l74 77"/><path d="M735 198h-97l-42 52"/><path d="M83 306h114"/><path d="M782 298h-85"/>
+  <circle cx="102" cy="239" r="9" fill="#E8FBFF"/><circle cx="744" cy="198" r="9" fill="#E8FBFF"/><circle cx="73" cy="306" r="8" fill="#E8FBFF"/><circle cx="794" cy="298" r="8" fill="#E8FBFF"/>
+</g>
+<g filter="url(#chipShadow)">
+  <path d="M325 188l284-72 150 126-300 105-178-116 44-43z" fill="url(#chipFace)"/>
+  <path d="M281 231l178 116 300-105v47L459 412 281 293v-62z" fill="url(#chipEdge)"/>
+  <path d="M325 188l284-72 150 126-300 105-178-116 44-43z" stroke="#BFD5F4" stroke-width="5"/>
+  <path d="M281 293l178 119 300-123" stroke="#0A3B9F" stroke-opacity=".55" stroke-width="5"/>
+</g>
+<g stroke="#0D3B91" stroke-width="7" stroke-linecap="round" opacity=".55">
+  <path d="M314 316l-20 18M345 336l-20 20M376 357l-20 22M407 378l-20 20M438 397l-20 22"/>
+  <path d="M755 269l27-5M730 280l27-5M704 291l27-6M678 302l27-6M652 313l27-6M626 324l27-6"/>
+</g>
+<g transform="translate(442 177) rotate(13) scale(.62)">
+  <path d="M31 96C59 56 118 34 229 24c-13 16-29 32-47 48-60 8-108 20-143 42-7-6-10-12-8-18z" fill="#F20000"/>
+  <path d="M39 123c30-38 76-52 166-61l-17 30c-70 8-107 21-124 46-12 17 2 32 31 32h31l-11-24H93c-11 0-16-8-10-18 10-17 35-25 82-29l-20 38h31l-17 33h47l-18 32H92c-56 0-80-35-53-79z" fill="#0B3A91"/>
+</g>
+<text x="452" y="279" transform="rotate(13 452 279)" font-family="Noto Sans CJK SC, Microsoft YaHei, sans-serif" font-size="43" font-weight="800" fill="#0B3A91" opacity=".85">航顺芯片</text>
+</svg>

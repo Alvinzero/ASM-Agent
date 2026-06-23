@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 智能体思维链演示</title>
+<style>
+  :root{color-scheme:light;--bg:#f5f5f5;--card:#fff;--tool:#f3f4f6;
+  --border:#e5e7eb;--txt:#1f2937;--sub:#6b7280;--accent:#3b82f6;--ok:#10b981;--run:#f59e0b;--code:#eef0f3;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Microsoft YaHei",sans-serif;
+  background:var(--bg);color:var(--txt);padding:20px;line-height:1.6;}
+  .container{max-width:820px;margin:0 auto;}
+  .header{background:var(--card);padding:24px;border-radius:12px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.1);}
+  .header h1{font-size:22px;margin-bottom:8px;}
+  .header p{color:var(--sub);font-size:14px;}
+  .workspace{background:var(--card);border-radius:12px;padding:24px 28px;box-shadow:0 1px 3px rgba(0,0,0,.1);}
+  .spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;flex-shrink:0;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* 时间线单一信息流 */
+  #feed{display:flex;flex-direction:column;}
+  .feed-item{animation:fade .35s ease-out;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+  /* 叙述文字块 */
+  .narration{font-size:15px;color:var(--txt);padding:14px 0;}
+  .narration code{background:var(--code);padding:2px 6px;border-radius:4px;font-size:13px;font-family:"SF Mono",Monaco,monospace;}
+  .cursor{display:inline-block;width:2px;height:1.05em;background:var(--accent);margin-left:2px;vertical-align:text-bottom;animation:blink 1s infinite;}
+  @keyframes blink{0%,50%{opacity:1;}51%,100%{opacity:0;}}
+
+  /* 工具组（已运行 N 条命令） */
+  .tool-group{border:1px solid var(--border);border-radius:10px;margin:6px 0 10px;overflow:hidden;}
+  .tg-head{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;user-select:none;background:var(--tool);font-size:14px;color:var(--sub);}
+  .tg-head:hover{background:#e9eaee;}
+  .tg-ico{flex-shrink:0;}
+  .tg-title{flex:1;font-weight:500;}
+  .chev{transition:transform .2s;font-size:11px;color:var(--sub);}
+  .chev.open{transform:rotate(180deg);}
+  .tg-body{display:flex;flex-direction:column;}
+  .tg-body.hidden{display:none;}
+  .cmd{padding:9px 16px;font-size:13px;color:var(--sub);font-family:"SF Mono",Monaco,monospace;border-top:1px solid var(--border);background:#fafbfc;display:flex;gap:8px;align-items:flex-start;}
+  .cmd .mark{flex-shrink:0;}
+  .cmd .mark.ok{color:var(--ok);}
+  .cmd .res{color:#9ca3af;}
+
+  /* 单个具名动作（如 连接浏览器 / 读取状态） */
+  .action{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--border);
+  border-radius:10px;margin:6px 0 10px;font-size:14px;background:var(--tool);}
+  .action .a-ico{flex-shrink:0;}
+  .action .a-title{font-weight:500;color:var(--txt);}
+  .action.running .a-title{color:var(--sub);}
+
+  /* 文件编辑标记 */
+  .edit-mark{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:14px;color:var(--sub);}
+
+  .controls{margin-top:24px;padding-top:20px;border-top:1px solid var(--border);display:flex;gap:12px;}
+  .btn{padding:10px 20px;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;transition:all .2s;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:#2563eb;}
+  .btn-secondary{background:var(--tool);color:var(--txt);}
+  .btn-secondary:hover{background:#e5e7eb;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>🤖 AI 智能体思维链演示</h1>
+    <p>Codex 风格单一时间线：叙述 → 工具 → 叙述 → 工具，关键节点都有文字说明</p>
+  </div>
+  <div class="workspace">
+    <div id="feed"></div>
+    <div class="controls">
+      <button class="btn btn-primary" id="startBtn">开始演示</button>
+      <button class="btn btn-secondary" id="resetBtn" disabled>重置</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== 工作流脚本：严格按时间顺序穿插叙述与工具 ======
+// type:
+//   narration  - 一段流式叙述文字（支持 `code` 内联标记）
+//   commands   - 一组命令（折叠为"已运行 N 条命令"）
+//   action     - 单个具名动作（如"连接浏览器"）
+//   edit       - 文件编辑标记
+var workflow = [
+  { type:'narration', text:'我先在浏览器里复现：看这个"钱包"按钮和左侧钱包项到底是没有 `href`、被前端拦截了，还是路由存在但页面报错。然后再决定是改前端代码还是服务端路由配置。' },
+  { type:'commands', title:'已运行 3 条命令', dur:1400, cmds:[
+      { text:'Get-Content -Raw browser/26.609/skills/config.md', result:'读取 142 行' },
+      { text:'Get-Content -Raw skills/diagnose/SKILL.md', result:'读取 88 行' },
+      { text:'rg -n "wallet|钱包|余额充值|top_ups|dashboard/overview"', result:'找到 7 个匹配' }
+  ]},
+  { type:'narration', text:'我会用浏览器检查当前页面的链接属性和点击后的 URL / 控制台错误；这一步只读页面状态加点导航，不改数据。' },
+  { type:'action', title:'连接浏览器', dur:1600, result:'已连接' },
+  { type:'narration', text:'浏览器连接好了。我先读 DOM 里的钱包链接和当前脚本资源，再点一次主卡片钱包按钮，记录 URL 是否变化和是否有控制台错误。' },
+  { type:'action', title:'读取钱包链接状态', dur:1800, result:'完成' },
+  { type:'narration', text:'DOM 里两个钱包入口都有 `href="/wallet"`，但控制台已经有 TanStack Router 的 `_nonReactive` 预加载错误。我的假设是"钱包路由定义/父路由上下文有问题，导致前端 router 拦截后失败"。我再点入口，确认是不是 URL 不变。' },
+  { type:'commands', title:'已运行 2 条命令', dur:1200, cmds:[
+      { text:'rg -n "createRoute|/wallet|parentRoute" src/routes', result:'找到 4 个匹配' },
+      { text:'Get-Content -Raw src/routes/wallet.tsx', result:'读取 56 行' }
+  ]},
+  { type:'narration', text:'确认了：`wallet.tsx` 里 `getParentRoute` 指向了一个尚未挂载的上下文，所以 router 拦截后报 `_nonReactive`。修复方式是把父路由改成已注册的 `rootRoute`。我先改这一处。' },
+  { type:'edit', text:'编辑了 src/routes/wallet.tsx' },
+  { type:'narration', text:'改完后跑一遍路由相关测试，确认钱包入口能正常跳转且控制台不再报错。' },
+  { type:'action', title:'运行测试 npm test wallet', dur:2400, result:'✓ 5/5 通过' },
+  { type:'narration', text:'全部通过。问题根因是父路由上下文未挂载，已修复并验证：点击钱包入口现在能正常进入 `/wallet`，控制台无报错。' }
+];
+
+var $=function(id){return document.getElementById(id);};
+var feed=$('feed');
+var timers=[];
+function clearTimers(){timers.forEach(clearTimeout);timers=[];}
+function delay(fn,ms){var t=setTimeout(fn,ms);timers.push(t);return t;}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// 把 `code` 标记转成 <code>
+function md(s){return esc(s).replace(/`([^`]+)`/g,'<code>$1</code>');}
+
+function reset(){
+  clearTimers();
+  feed.innerHTML='';
+  $('startBtn').disabled=false;
+  $('startBtn').textContent='开始演示';
+  $('resetBtn').disabled=true;
+}
+
+function finish(){
+  $('startBtn').disabled=false;
+  $('startBtn').textContent='重新演示';
+}
+
+function start(){
+  reset();
+  $('startBtn').disabled=true;
+  $('startBtn').textContent='运行中...';
+  $('resetBtn').disabled=false;
+  run(0);
+}
+
+function run(i){
+  if(i>=workflow.length){finish();return;}
+  var item=workflow[i];
+  var next=function(){ run(i+1); };
+
+  if(item.type==='narration')      renderNarration(item,next);
+  else if(item.type==='commands')  renderCommands(item,next);
+  else if(item.type==='action')    renderAction(item,next);
+  else if(item.type==='edit')      renderEdit(item,next);
+}
+
+// ---- 叙述：逐字打字 ----
+function renderNarration(item,next){
+  var wrap=document.createElement('div');
+  wrap.className='feed-item narration';
+  var span=document.createElement('span');
+  var cur=document.createElement('span');cur.className='cursor';
+  wrap.appendChild(span);wrap.appendChild(cur);
+  feed.appendChild(wrap);
+  wrap.scrollIntoView({behavior:'smooth',block:'end'});
+
+  var txt=item.text,ci=0;
+  (function type(){
+    if(ci<txt.length){
+      ci++;
+      span.innerHTML=md(txt.slice(0,ci));
+      delay(type,22);
+    }else{
+      cur.remove();
+      delay(next,450);
+    }
+  })();
+}
+
+// ---- 命令组：折叠 ----
+function renderCommands(item,next){
+  var wrap=document.createElement('div');
+  wrap.className='feed-item tool-group';
+  wrap.innerHTML=
+    '<div class="tg-head">'+
+      '<span class="tg-ico"><span class="spinner"></span></span>'+
+      '<span class="tg-title">正在运行命令...</span>'+
+      '<span class="chev open">▼</span>'+
+    '</div>'+
+    '<div class="tg-body"></div>';
+  feed.appendChild(wrap);
+  wrap.scrollIntoView({behavior:'smooth',block:'end'});
+
+  var body=wrap.querySelector('.tg-body');
+  var head=wrap.querySelector('.tg-head');
+  var chev=wrap.querySelector('.chev');
+  // 折叠交互
+  head.onclick=function(){
+    body.classList.toggle('hidden');
+    chev.classList.toggle('open');
+  };
+
+  // 逐条命令出现
+  var per=Math.max(300,Math.floor(item.dur/item.cmds.length));
+  var k=0;
+  (function addCmd(){
+    if(k<item.cmds.length){
+      var c=item.cmds[k];
+      var row=document.createElement('div');
+      row.className='cmd';
+      row.innerHTML='<span class="mark"><span class="spinner" style="width:12px;height:12px;border-width:2px"></span></span>'+
+        '<span>'+esc(c.text)+'</span>';
+      body.appendChild(row);
+      wrap.scrollIntoView({behavior:'smooth',block:'end'});
+      (function(row,c){
+        delay(function(){
+          row.innerHTML='<span class="mark ok">✓</span><span>'+esc(c.text)+
+            ' <span class="res">→ '+esc(c.result)+'</span></span>';
+        },per*0.7);
+      })(row,c);
+      k++;
+      delay(addCmd,per);
+    }else{
+      delay(function(){
+        wrap.querySelector('.tg-ico').innerHTML='<span style="color:var(--ok)">✓</span>';
+        wrap.querySelector('.tg-title').textContent=item.title;
+        delay(next,300);
+      },per*0.7);
+    }
+  })();
+}
+
+// ---- 单个具名动作 ----
+function renderAction(item,next){
+  var wrap=document.createElement('div');
+  wrap.className='feed-item action running';
+  wrap.innerHTML='<span class="a-ico"><span class="spinner"></span></span>'+
+    '<span class="a-title">'+esc(item.title)+'</span>';
+  feed.appendChild(wrap);
+  wrap.scrollIntoView({behavior:'smooth',block:'end'});
+  delay(function(){
+    wrap.classList.remove('running');
+    wrap.innerHTML='<span class="a-ico" style="color:var(--ok)">✓</span>'+
+      '<span class="a-title">'+esc(item.title)+'</span>'+
+      '<span style="color:#9ca3af;font-size:13px;margin-left:auto">'+esc(item.result)+'</span>';
+    delay(next,300);
+  },item.dur);
+}
+
+// ---- 文件编辑标记 ----
+function renderEdit(item,next){
+  var wrap=document.createElement('div');
+  wrap.className='feed-item edit-mark';
+  wrap.innerHTML='<span style="color:var(--accent)">✎</span><span>'+esc(item.text)+'</span>';
+  feed.appendChild(wrap);
+  wrap.scrollIntoView({behavior:'smooth',block:'end'});
+  delay(next,500);
+}
+
+$('startBtn').onclick=start;
+$('resetBtn').onclick=reset;
+</script>
+</body>
+</html>

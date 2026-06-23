@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none" role="img" aria-label="help question icon">
+<title>help question icon</title>
+<defs>
+  <linearGradient id="help_bg" x1="42" y1="30" x2="216" y2="236" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#FFFFFF" stop-opacity=".95"/>
+    <stop offset="1" stop-color="#64748B" stop-opacity=".16"/>
+  </linearGradient>
+  <radialGradient id="help_halo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(128 130) rotate(90) scale(84)">
+    <stop stop-color="#64748B" stop-opacity=".23"/>
+    <stop offset=".55" stop-color="#64748B" stop-opacity=".10"/>
+    <stop offset="1" stop-color="#64748B" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="help_circle" x1="86" y1="78" x2="170" y2="178" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#64748B"/>
+    <stop offset="1" stop-color="#475569"/>
+  </linearGradient>
+  <filter id="help_shadow" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB">
+    <feDropShadow dx="0" dy="14" stdDeviation="16" flood-color="#64748B" flood-opacity=".20"/>
+    <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#0F172A" flood-opacity=".10"/>
+  </filter>
+  <filter id="help_soft" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+    <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#0B3A91" flood-opacity=".14"/>
+  </filter>
+</defs>
+
+<circle cx="128" cy="128" r="84" fill="#F8FBFF" filter="url(#help_soft)"/>
+<circle cx="128" cy="128" r="64" stroke="#64748B" stroke-width="14"/>
+<path d="M107 111c3-16 16-27 32-27 17 0 31 11 31 27 0 18-14 25-27 34-8 5-10 9-10 18" stroke="#64748B" stroke-width="13" stroke-linecap="round"/>
+<circle cx="128" cy="187" r="8" fill="#64748B"/>
+
+</svg>

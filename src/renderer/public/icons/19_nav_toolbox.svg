@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none" role="img" aria-label="toolbox navigation icon">
+<title>toolbox navigation icon</title>
+<defs>
+  <filter id="toolbox_soft" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+    <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#0B3A91" flood-opacity=".14"/>
+  </filter>
+</defs>
+
+<circle cx="128" cy="128" r="86" fill="#F6FAFF" filter="url(#toolbox_soft)"/>
+<path d="M64 102h128c8 0 14 6 14 14v60c0 8-6 14-14 14H64c-8 0-14-6-14-14v-60c0-8 6-14 14-14z" fill="#fff" stroke="#64748B" stroke-width="12" stroke-linejoin="round"/>
+<path d="M100 102V86c0-8 6-14 14-14h28c8 0 14 6 14 14v16" stroke="#64748B" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M50 138h156" stroke="#64748B" stroke-width="12" stroke-linecap="round"/>
+<rect x="112" y="124" width="32" height="28" rx="7" fill="#EAF2FF" stroke="#1B62E8" stroke-width="10"/>
+
+</svg>

@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build and packaging output
+dist/
+dist-main/
+dist-renderer/
+release/
+
+# Runtime output and local generated files
+logs/
+output/
+coverage/
+*.log
+*.tsbuildinfo
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local agent/browser state
+.codex-run/
+.superpowers/
+.claude/settings.local.json
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+desktop.ini
+.fuse_hidden*
