@@ -20,4 +20,10 @@ describe('release workflow', () => {
     expect(packageJson).toContain('"release:win": "npm run build && electron-builder --win nsis"');
     expect(packageJson).not.toContain('--publish always');
   });
+
+  it('uses an explicit Windows installer artifact name that matches the upload step', () => {
+    const builderConfig = readFileSync(resolve('electron-builder.yml'), 'utf8');
+
+    expect(builderConfig).toContain('artifactName: ASM-Agent-Setup-${version}.${ext}');
+  });
 });

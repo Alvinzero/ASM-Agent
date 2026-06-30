@@ -8,6 +8,7 @@ files:
   - package.json
 asar: true
 win:
+  artifactName: ASM-Agent-Setup-${version}.${ext}
   target:
     - nsis
 nsis:
