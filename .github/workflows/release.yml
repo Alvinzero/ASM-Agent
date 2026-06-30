@@ -63,11 +63,14 @@ jobs:
             "release/latest.yml"
           )
 
+          Get-ChildItem release
+
           foreach ($artifact in $artifacts) {
             if (-not (Test-Path $artifact)) {
               Write-Error "Missing release artifact: $artifact"
               exit 1
             }
-          }
 
-          gh release upload "$env:RELEASE_TAG" $artifacts --clobber --repo "$env:GH_RELEASE_OWNER/$env:GH_RELEASE_REPO"
+            Write-Host "Uploading $artifact"
+            gh release upload "$env:RELEASE_TAG" $artifact --clobber --repo "$env:GH_RELEASE_OWNER/$env:GH_RELEASE_REPO"
+          }
