@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createRendererFallbackResponse } from '../../src/main/protocol/RendererFallbackProtocol';
+import { createRendererFallbackResponse } from '../../src/main/protocol/RendererFallbackProtocolCore';
 
 function createProtocolRequest(url: string, body: unknown): Request {
   return new Request(url, {
