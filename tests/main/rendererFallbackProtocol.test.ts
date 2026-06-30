@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import path from 'node:path';
 
 import { createRendererFallbackResponse } from '../../src/main/protocol/RendererFallbackProtocolCore';
 
@@ -71,7 +72,7 @@ describe('renderer fallback protocol', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(saveSessionAsmFile).toHaveBeenCalledWith('C:\\Users\\demo\\Documents/ASM Agent/sessions', 'session-1', {
+    expect(saveSessionAsmFile).toHaveBeenCalledWith(path.join('C:\\Users\\demo\\Documents', 'ASM Agent', 'sessions'), 'session-1', {
       path: 'main.asm',
       content: 'CLRWDT\n'
     });
