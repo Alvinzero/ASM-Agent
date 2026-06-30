@@ -5,6 +5,7 @@ import { registerAgentHandlers } from './ipc/agentHandlers';
 import { registerFileHandlers } from './ipc/fileHandlers';
 import { registerProjectHandlers } from './ipc/projectHandlers';
 import { checkForAppUpdates, registerUpdateHandlers } from './ipc/updateHandlers';
+import { registerRendererFallbackProtocol } from './protocol/RendererFallbackProtocol';
 
 function getTrustedDevServerUrl(): string | undefined {
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
@@ -51,7 +52,10 @@ registerFileHandlers();
 registerProjectHandlers();
 registerUpdateHandlers();
 
-void app.whenReady().then(createWindow);
+void app.whenReady().then(() => {
+  registerRendererFallbackProtocol();
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

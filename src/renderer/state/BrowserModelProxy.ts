@@ -4,6 +4,7 @@ import {
   type CompleteChatRequest,
   type ModelStreamEventHandler
 } from '../../shared/agent/ModelAdapter';
+import { resolveRendererFallbackEndpoint } from './RendererFallbackEndpoint';
 
 type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
 
@@ -13,11 +14,12 @@ const COMPLETE_CHAT_STREAM_PROXY_ENDPOINT = '/api/complete-chat-stream';
 export async function completeChatViaLocalProxy(
   request: CompleteChatRequest,
   fetchImpl: FetchLike = fetch,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  locationLike: Pick<Location, 'protocol'> | undefined = typeof window !== 'undefined' ? window.location : undefined
 ): Promise<string> {
   let response: Response;
   try {
-    response = await fetchImpl(COMPLETE_CHAT_PROXY_ENDPOINT, {
+    response = await fetchImpl(resolveRendererFallbackEndpoint(COMPLETE_CHAT_PROXY_ENDPOINT, locationLike), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -51,11 +53,12 @@ export async function streamChatViaLocalProxy(
   request: CompleteChatRequest,
   onEvent: ModelStreamEventHandler,
   fetchImpl: FetchLike = fetch,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  locationLike: Pick<Location, 'protocol'> | undefined = typeof window !== 'undefined' ? window.location : undefined
 ): Promise<string> {
   let response: Response;
   try {
-    response = await fetchImpl(COMPLETE_CHAT_STREAM_PROXY_ENDPOINT, {
+    response = await fetchImpl(resolveRendererFallbackEndpoint(COMPLETE_CHAT_STREAM_PROXY_ENDPOINT, locationLike), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

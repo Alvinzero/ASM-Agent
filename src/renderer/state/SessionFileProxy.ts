@@ -1,4 +1,5 @@
 import type { GeneratedFile } from '../../shared/project/ProjectTypes';
+import { resolveRendererFallbackEndpoint } from './RendererFallbackEndpoint';
 
 interface SavedAsmFile {
   path: string;
@@ -11,9 +12,10 @@ const OPEN_SESSION_FILE_ENDPOINT = '/api/session-file/open';
 
 export async function saveAsmFileViaLocalProxy(
   payload: { sessionId: string; file: GeneratedFile },
-  fetchImpl: typeof fetch = fetch
+  fetchImpl: typeof fetch = fetch,
+  locationLike: Pick<Location, 'protocol'> | undefined = typeof window !== 'undefined' ? window.location : undefined
 ): Promise<SavedAsmFile> {
-  const response = await fetchImpl(SAVE_SESSION_ASM_ENDPOINT, {
+  const response = await fetchImpl(resolveRendererFallbackEndpoint(SAVE_SESSION_ASM_ENDPOINT, locationLike), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -29,8 +31,12 @@ export async function saveAsmFileViaLocalProxy(
   return readSavedAsmFile(body);
 }
 
-export async function openSessionFileViaLocalProxy(payload: { path: string }, fetchImpl: typeof fetch = fetch): Promise<{ ok: true }> {
-  const response = await fetchImpl(OPEN_SESSION_FILE_ENDPOINT, {
+export async function openSessionFileViaLocalProxy(
+  payload: { path: string },
+  fetchImpl: typeof fetch = fetch,
+  locationLike: Pick<Location, 'protocol'> | undefined = typeof window !== 'undefined' ? window.location : undefined
+): Promise<{ ok: true }> {
+  const response = await fetchImpl(resolveRendererFallbackEndpoint(OPEN_SESSION_FILE_ENDPOINT, locationLike), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

@@ -1,6 +1,6 @@
 {
   "name": "asm-agent",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": true,
   "description": "Local ASM project generation agent for company chip platforms.",
   "main": "dist-main/main/main.js",

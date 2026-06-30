@@ -176,4 +176,31 @@ describe('browser fallback model proxy', () => {
 
     expect(capturedInit?.signal).toBe(abortController.signal);
   });
+
+  it('routes browser fallback requests through the desktop protocol when running from file://', async () => {
+    const request = buildChatRequest();
+    const fetchMock = vi.fn(async () => {
+      return new Response(JSON.stringify({ content: 'desktop proxied answer' }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { completeChatViaLocalProxy } = await import('../../src/renderer/state/BrowserModelProxy');
+
+    await expect(
+      completeChatViaLocalProxy(request, fetchMock, undefined, { protocol: 'file:' } as Location)
+    ).resolves.toBe('desktop proxied answer');
+    expect(fetchMock).toHaveBeenCalledWith('asm-agent://local/api/complete-chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request),
+      signal: undefined
+    });
+  });
 });
