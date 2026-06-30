@@ -16,6 +16,7 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GH_RELEASE_OWNER: ${{ github.repository_owner }}
       GH_RELEASE_REPO: ${{ github.event.repository.name }}
+      RELEASE_TAG: ${{ github.ref_name }}
 
     steps:
       - name: Checkout repository
@@ -33,5 +34,40 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Build and publish Windows installer
+      - name: Build Windows installer
         run: npm run release:win
+
+      - name: Ensure single draft release exists
+        shell: pwsh
+        run: |
+          $existing = gh release view "$env:RELEASE_TAG" --json isDraft,tagName --repo "$env:GH_RELEASE_OWNER/$env:GH_RELEASE_REPO" 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create "$env:RELEASE_TAG" `
+              --draft `
+              --title "$env:RELEASE_TAG" `
+              --notes "自动构建发布 $env:RELEASE_TAG" `
+              --repo "$env:GH_RELEASE_OWNER/$env:GH_RELEASE_REPO"
+            exit $LASTEXITCODE
+          }
+
+          Write-Host "Release already exists for $env:RELEASE_TAG"
+          Write-Host $existing
+
+      - name: Upload Windows release assets
+        shell: pwsh
+        run: |
+          $releaseVersion = $env:RELEASE_TAG.TrimStart('v')
+          $artifacts = @(
+            "release/ASM-Agent-Setup-$releaseVersion.exe",
+            "release/ASM-Agent-Setup-$releaseVersion.exe.blockmap",
+            "release/latest.yml"
+          )
+
+          foreach ($artifact in $artifacts) {
+            if (-not (Test-Path $artifact)) {
+              Write-Error "Missing release artifact: $artifact"
+              exit 1
+            }
+          }
+
+          gh release upload "$env:RELEASE_TAG" $artifacts --clobber --repo "$env:GH_RELEASE_OWNER/$env:GH_RELEASE_REPO"

@@ -13,7 +13,7 @@
     "spec:compile": "tsx scripts/compileSpec.ts",
     "asm:validate": "tsx scripts/validateAsm.ts",
     "package:win": "npm run build && electron-builder --win nsis",
-    "release:win": "npm run build && electron-builder --win nsis --publish always",
+    "release:win": "npm run build && electron-builder --win nsis",
     "lint": "tsc --noEmit"
   },
   "devDependencies": {
