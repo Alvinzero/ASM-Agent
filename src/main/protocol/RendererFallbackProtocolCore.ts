@@ -23,6 +23,9 @@ export interface RendererFallbackDependencies {
   saveSessionAsmFile: (rootDir: string, sessionId: string, file: GeneratedFile) => SavedAsmFile;
   showItemInFolder: (targetPath: string) => void;
   documentsDir: string;
+  getUpdateState: () => import('../../shared/updater/UpdateSnapshot').UpdateSnapshot;
+  checkForUpdates: () => Promise<import('../../shared/updater/UpdateSnapshot').UpdateSnapshot>;
+  quitAndInstallUpdate: () => void;
 }
 
 function getSessionOutputRoot(documentsDir: string): string {
@@ -164,6 +167,19 @@ export async function createRendererFallbackResponse(
       const root = getSessionOutputRoot(dependencies.documentsDir);
       assertPathInsideRoot(root, payload.path, 'open file');
       dependencies.showItemInFolder(payload.path);
+      return jsonResponse({ ok: true });
+    }
+
+    if (route === '/api/updater/state') {
+      return jsonResponse(dependencies.getUpdateState());
+    }
+
+    if (route === '/api/updater/check') {
+      return jsonResponse(await dependencies.checkForUpdates());
+    }
+
+    if (route === '/api/updater/quit-and-install') {
+      dependencies.quitAndInstallUpdate();
       return jsonResponse({ ok: true });
     }
 

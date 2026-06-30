@@ -34,6 +34,14 @@ export function registerUpdateHandlers(): void {
   });
 }
 
+export function getCurrentUpdateState(): UpdateSnapshot {
+  return updaterService.getSnapshot();
+}
+
 export async function checkForAppUpdates(): Promise<UpdateSnapshot> {
   return updaterService.checkForUpdates();
+}
+
+export function quitAndInstallAppUpdate(): void {
+  updaterService.quitAndInstall();
 }

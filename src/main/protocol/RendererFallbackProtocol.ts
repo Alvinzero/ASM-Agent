@@ -4,6 +4,7 @@ import {
   streamOpenAiCompatibleChat,
 } from '../../shared/agent/ModelAdapter';
 import { saveSessionAsmFile } from '../../shared/project/SessionFileStore';
+import { checkForAppUpdates, getCurrentUpdateState, quitAndInstallAppUpdate } from '../ipc/updateHandlers';
 import {
   createRendererFallbackResponse,
   type RendererFallbackDependencies
@@ -34,7 +35,12 @@ function buildDefaultDependencies(): RendererFallbackDependencies {
     showItemInFolder: (targetPath) => {
       shell.showItemInFolder(targetPath);
     },
-    documentsDir: app.getPath('documents')
+    documentsDir: app.getPath('documents'),
+    getUpdateState: () => getCurrentUpdateState(),
+    checkForUpdates: () => checkForAppUpdates(),
+    quitAndInstallUpdate: () => {
+      quitAndInstallAppUpdate();
+    }
   };
 }
 

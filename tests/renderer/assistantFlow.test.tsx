@@ -2209,7 +2209,7 @@ describe('assistant flow', () => {
     await renderAuthenticatedApp();
 
     expect(screen.queryByText('桥接 API 不可用')).not.toBeInTheDocument();
-    expect(document.body.textContent).toContain('v0.0.5');
+    expect(document.body.textContent).toContain('v0.0.6');
 
     fireEvent.change(screen.getByLabelText('ASM 功能需求'), {
       target: { value: '生成一个精确 1ms 的 Timer0 中断工程。' }
