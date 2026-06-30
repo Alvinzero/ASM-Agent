@@ -9,6 +9,7 @@ describe('release workflow', () => {
 
     expect(workflow).toContain('gh release view "$env:RELEASE_TAG"');
     expect(workflow).toContain('gh release create "$env:RELEASE_TAG"');
+    expect(workflow).toContain('gh release edit "$env:RELEASE_TAG" --draft=false');
     expect(workflow).toContain('Get-ChildItem release');
     expect(workflow).toContain('foreach ($artifact in $artifacts)');
     expect(workflow).toContain('gh release upload "$env:RELEASE_TAG" $artifact');

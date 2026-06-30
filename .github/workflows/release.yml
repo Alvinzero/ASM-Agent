@@ -37,13 +37,12 @@ jobs:
       - name: Build Windows installer
         run: npm run release:win
 
-      - name: Ensure single draft release exists
+      - name: Ensure published release exists
         shell: pwsh
         run: |
           $existing = gh release view "$env:RELEASE_TAG" --json isDraft,tagName --repo "$env:GH_RELEASE_OWNER/$env:GH_RELEASE_REPO" 2>$null
           if ($LASTEXITCODE -ne 0) {
             gh release create "$env:RELEASE_TAG" `
-              --draft `
               --title "$env:RELEASE_TAG" `
               --notes "自动构建发布 $env:RELEASE_TAG" `
               --repo "$env:GH_RELEASE_OWNER/$env:GH_RELEASE_REPO"
@@ -52,6 +51,10 @@ jobs:
 
           Write-Host "Release already exists for $env:RELEASE_TAG"
           Write-Host $existing
+          $release = $existing | ConvertFrom-Json
+          if ($release.isDraft) {
+            gh release edit "$env:RELEASE_TAG" --draft=false --repo "$env:GH_RELEASE_OWNER/$env:GH_RELEASE_REPO"
+          }
 
       - name: Upload Windows release assets
         shell: pwsh
