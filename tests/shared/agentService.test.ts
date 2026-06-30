@@ -8,18 +8,18 @@ const repository = new BuiltInSpecRepository();
 describe('AgentService', () => {
   it('creates a Timer0 interrupt plan that toggles PA0 with only built-in registers', async () => {
     const service = new AgentService(repository);
-    const spec = repository.getByChipId('HK8S8100X');
+    const spec = repository.getByChipId('HK64S8x');
     const registerNames = new Set(spec.registers.map((register) => register.name));
 
     const result = await service.createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: '生成 Timer0 中断翻转 PA0 的 GPIO ASM 工程'
     });
 
     expect(result.status).toBe('ready');
     if (result.status !== 'ready') throw new Error('Expected ready plan');
 
-    expect(result.plan.chipId).toBe('HK8S8100X');
+    expect(result.plan.chipId).toBe('HK64S8x');
     expect(result.plan.files).toEqual(
       expect.arrayContaining([
         'startup/reset.asm',
@@ -41,7 +41,7 @@ describe('AgentService', () => {
     const service = new AgentService(repository);
 
     const result = await service.createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: '精确 1ms Timer0 中断工程'
     });
 
@@ -54,7 +54,7 @@ describe('AgentService', () => {
     const service = new AgentService(repository);
 
     const result = await service.createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: '使用 4MHz OSC 时钟源和 1:64 分频生成精确 1ms Timer0 中断翻转 PA0 工程'
     });
 
@@ -67,7 +67,7 @@ describe('AgentService', () => {
     const service = new AgentService(repository);
 
     const result = await service.createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: 'precision Timer0 interrupt with OSC clock and 1:64 prescaler'
     });
 
@@ -81,7 +81,7 @@ describe('AgentService', () => {
     const service = new AgentService(repository);
 
     const result = await service.createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: 'periodic WDT clear'
     });
 
@@ -95,7 +95,7 @@ describe('AgentService', () => {
     const service = new AgentService(repository);
 
     const result = await service.createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: '1毫秒 Timer0 中断工程'
     });
 
@@ -108,7 +108,7 @@ describe('AgentService', () => {
     const service = new AgentService(repository);
 
     const result = await service.createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: '1Hz Timer0 中断工程'
     });
 
@@ -121,7 +121,7 @@ describe('AgentService', () => {
     const service = new AgentService(repository);
 
     const result = await service.createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: 'precision Timer0 interrupt'
     });
 
@@ -134,7 +134,7 @@ describe('AgentService', () => {
     const service = new AgentService(repository);
 
     const result = await service.createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: '使用 4MHz OSC 生成精确 1ms Timer0 中断工程'
     });
 
@@ -145,11 +145,11 @@ describe('AgentService', () => {
 
   it('recognizes WDT requirements with real built-in WDT registers', async () => {
     const service = new AgentService(repository);
-    const spec = repository.getByChipId('HK8S8100X');
+    const spec = repository.getByChipId('HK64S8x');
     const registerNames = new Set(spec.registers.map((register) => register.name));
 
     const result = await service.createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: '生成启用 WDT 看门狗并定期清狗的 ASM 工程'
     });
 
@@ -158,21 +158,21 @@ describe('AgentService', () => {
     expect(result.plan.features).toContain('WDT');
     expect(result.plan.requiredRegisters).toEqual(expect.arrayContaining(['WDT_PS']));
     expect(result.plan.requiredRegisters.every((register) => registerNames.has(register))).toBe(true);
-    expect(result.plan.assumptions.join('\n')).toMatch(/内置规范|HK8S8100X/);
+    expect(result.plan.assumptions.join('\n')).toMatch(/内置规范|HK64S8x/);
   });
 
   it('asks for a target function when the requirement is empty or too short', async () => {
     const service = new AgentService(repository);
 
     await expect(
-      service.createPlan({ chipId: 'HK8S8100X', requirement: '  ' })
+      service.createPlan({ chipId: 'HK64S8x', requirement: '  ' })
     ).resolves.toMatchObject({
       status: 'needsInput',
       questions: [expect.stringMatching(/目标功能|需求/)]
     });
 
     await expect(
-      service.createPlan({ chipId: 'HK8S8100X', requirement: '做' })
+      service.createPlan({ chipId: 'HK64S8x', requirement: '做' })
     ).resolves.toMatchObject({
       status: 'needsInput',
       questions: [expect.stringMatching(/目标功能|需求/)]

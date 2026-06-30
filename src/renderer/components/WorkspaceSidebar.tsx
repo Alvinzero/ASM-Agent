@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState, type Dispatch, type FormEvent, type Mouse
 import { createPortal } from 'react-dom';
 
 import type { AuthUserProfile } from '../../shared/auth/UserAuthTypes';
+import type { UpdateSnapshot } from '../../shared/updater/UpdateSnapshot';
 import type { AssistantMessage } from '../state/useAgentSession';
 import {
   buildChatEndpointPreview,
   buildProviderConfigHint,
   createBlankCustomModel,
+  getCustomModelDisplayName,
   getEditableModelConfig,
   MODEL_OPTIONS,
   type CustomModelConfig,
@@ -27,6 +29,8 @@ export interface ArchivedConversation {
 interface WorkspaceSidebarProps {
   chipId: string;
   sessionId: string;
+  appVersion: string | null;
+  updateState: UpdateSnapshot;
   messages: AssistantMessage[];
   currentFilePath: string;
   archivedConversations: ArchivedConversation[];
@@ -39,6 +43,8 @@ interface WorkspaceSidebarProps {
   onSelectConversation: (conversationId: string) => void;
   currentUser: AuthUserProfile;
   onLogout: () => void;
+  onCheckForUpdates: () => void;
+  onQuitAndInstallUpdate: () => void;
 }
 
 interface ConversationItem {
@@ -229,10 +235,6 @@ function getSelectedDraftCustomModel(state: ModelConfigDraftState): CustomModelC
   return state.customModels.find((model) => model.id === state.selectedCustomModelId) ?? state.customModels[0];
 }
 
-function getCustomModelDisplayName(model: CustomModelConfig, index: number): string {
-  return model.name.trim() || model.modelId.trim() || `自定义模型 ${index + 1}`;
-}
-
 function getDraftModelConfig(state: ModelConfigDraftState): ModelApiConfig {
   if (state.provider === 'custom') {
     const customModel = getSelectedDraftCustomModel(state);
@@ -280,6 +282,8 @@ function ensureCustomModelDraft(state: ModelConfigDraftState): ModelConfigDraftS
 export function WorkspaceSidebar({
   chipId,
   sessionId,
+  appVersion,
+  updateState,
   messages,
   currentFilePath,
   archivedConversations,
@@ -291,7 +295,9 @@ export function WorkspaceSidebar({
   onNewSession,
   onSelectConversation,
   currentUser,
-  onLogout
+  onLogout,
+  onCheckForUpdates,
+  onQuitAndInstallUpdate
 }: WorkspaceSidebarProps) {
   const [store, setStore] = useState<ConversationStore>(() => readConversationStore());
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
@@ -318,6 +324,28 @@ export function WorkspaceSidebar({
   );
   const selectedConversation = conversations.find((conversation) => conversation.id === contextMenu?.conversationId) ?? null;
   const draftModelConfig = getDraftModelConfig(draftModelState);
+  const resolvedVersion = appVersion ? (appVersion.startsWith('v') ? appVersion : `v${appVersion}`) : '未知版本';
+  const updateStatusLabel =
+    updateState.status === 'checking'
+      ? '正在检查更新'
+      : updateState.status === 'available'
+        ? updateState.availableVersion
+          ? `发现新版本 ${updateState.availableVersion}`
+          : '发现新版本'
+        : updateState.status === 'downloading'
+          ? `正在下载 ${updateState.progressPercent ?? 0}%`
+          : updateState.status === 'downloaded'
+            ? '新版本已下载完成'
+            : updateState.status === 'not-available'
+              ? '当前已经是最新版本'
+              : updateState.status === 'error'
+                ? '更新检查失败'
+                : updateState.status === 'unsupported'
+                  ? '当前环境不支持自动更新'
+                  : '尚未检查更新';
+  const canCheckForUpdates = updateState.status !== 'checking' && updateState.status !== 'downloading';
+  const canInstallUpdate = updateState.status === 'downloaded';
+  const updateActionLabel = canCheckForUpdates ? '检查更新' : '正在处理更新...';
 
   useEffect(() => {
     writeConversationStore(store);
@@ -596,7 +624,7 @@ export function WorkspaceSidebar({
                   <label className="settings-toggle-row">
                     <span>
                       <strong>自动规范化 ASM</strong>
-                      <small>生成候选代码后自动接入内置 HK8S8100X 规范校验。</small>
+                      <small>生成候选代码后自动接入内置 HK64S8x 规范校验。</small>
                     </span>
                     <input type="checkbox" checked={autoNormalize} onChange={(event) => setAutoNormalize(event.target.checked)} />
                   </label>
@@ -769,7 +797,7 @@ export function WorkspaceSidebar({
                 <div className="settings-card about-card">
                   <div>
                     <span>当前版本</span>
-                    <strong>v0.1.0-web</strong>
+                    <strong>{resolvedVersion}</strong>
                   </div>
                   <div>
                     <span>目标芯片</span>
@@ -778,6 +806,30 @@ export function WorkspaceSidebar({
                   <a href="https://www.hsxp-hk.com/" target="_blank" rel="noreferrer">
                     进入官网
                   </a>
+                </div>
+                <div className="settings-card about-update-card">
+                  <div className="about-update-row">
+                    <div className="about-update-copy">
+                      <span>更新状态</span>
+                      <strong>{updateStatusLabel}</strong>
+                      {updateState.message ? <small>{updateState.message}</small> : null}
+                    </div>
+                    <div className="about-update-actions">
+                      <button
+                        className="secondary-dialog-action"
+                        type="button"
+                        onClick={onCheckForUpdates}
+                        disabled={!canCheckForUpdates}
+                      >
+                        {updateActionLabel}
+                      </button>
+                      {canInstallUpdate ? (
+                        <button className="primary-dialog-action" type="button" onClick={onQuitAndInstallUpdate}>
+                          重启安装更新
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -797,7 +849,7 @@ export function WorkspaceSidebar({
             </span>
             <div>
               <strong>航顺 ASM Agent</strong>
-              <span>HK8S8100X 工程助手</span>
+              <span>HK64S8x 工程助手</span>
               <span>规范库已锁定</span>
             </div>
           </div>

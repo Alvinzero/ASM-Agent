@@ -31,6 +31,14 @@ export interface CompleteChatRequest extends OpenAiCompatibleChatConfig {
   messages?: CompleteChatMessage[];
 }
 
+export type ModelStreamEvent =
+  | { kind: 'assistant_text_delta'; text: string }
+  | { kind: 'assistant_reasoning_delta'; text: string }
+  | { kind: 'completed'; stopReason?: string }
+  | { kind: 'error'; message: string };
+
+export type ModelStreamEventHandler = (event: ModelStreamEvent) => void;
+
 type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
 
 export class DisabledModelAdapter implements ModelAdapter {
@@ -59,7 +67,8 @@ export class OpenAiCompatibleModelAdapter implements ModelAdapter {
 
 export async function completeOpenAiCompatibleChat(
   request: CompleteChatRequest,
-  fetchImpl: FetchLike = fetch
+  fetchImpl: FetchLike = fetch,
+  signal?: AbortSignal
 ): Promise<string> {
   const endpoint = buildChatCompletionsUrl(request.baseUrl);
   const response = await fetchImpl(endpoint, {
@@ -72,7 +81,8 @@ export async function completeOpenAiCompatibleChat(
       model: request.modelId,
       messages: buildOpenAiCompatibleMessages(request.systemPrompt, request.prompt, request.messages),
       temperature: 0.3
-    })
+    }),
+    signal
   });
 
   const responseText = await readResponseText(response);
@@ -92,6 +102,104 @@ export async function completeOpenAiCompatibleChat(
   }
 
   return content;
+}
+
+export async function streamOpenAiCompatibleChat(
+  request: CompleteChatRequest,
+  onEvent: ModelStreamEventHandler,
+  fetchImpl: FetchLike = fetch,
+  signal?: AbortSignal
+): Promise<string> {
+  const endpoint = buildChatCompletionsUrl(request.baseUrl);
+  const response = await fetchImpl(endpoint, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${request.apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: request.modelId,
+      messages: buildOpenAiCompatibleMessages(request.systemPrompt, request.prompt, request.messages),
+      temperature: 0.3,
+      stream: true
+    }),
+    signal
+  });
+
+  if (!response.ok) {
+    throw new Error(`${request.label} API 请求失败：HTTP ${response.status}${formatErrorPreview(await readResponseText(response))}`);
+  }
+
+  if (response.headers.get('Content-Type')?.toLowerCase().includes('application/json')) {
+    const payload = parseJsonResponse({
+      body: await readResponseText(response),
+      contentType: response.headers.get('Content-Type') ?? '',
+      endpoint,
+      label: request.label
+    });
+    const reasoning = readFirstAssistantReasoning(payload);
+    const content = readFirstAssistantMessage(payload);
+    if (reasoning) onEvent({ kind: 'assistant_reasoning_delta', text: reasoning });
+    if (content) onEvent({ kind: 'assistant_text_delta', text: content });
+    onEvent({ kind: 'completed', stopReason: 'stop' });
+    if (!content && !reasoning) {
+      throw new Error(`${request.label} API 返回为空或格式不兼容。`);
+    }
+    return content;
+  }
+
+  if (!response.body) {
+    throw new Error(`${request.label} API 没有返回可读取的数据流。`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullText = '';
+  let streamDone = false;
+
+  while (!streamDone) {
+    const readResult = await reader.read();
+    if (readResult.done) break;
+
+    buffer += decoder.decode(readResult.value, { stream: true });
+    const parsed = drainSseBuffer(buffer);
+    buffer = parsed.rest;
+
+    for (const block of parsed.blocks) {
+      const events = readOpenAiCompatibleStreamEvents(block);
+      for (const event of events) {
+        if (event.kind === 'error') {
+          throw new Error(`${request.label} API 流式请求失败：${event.message}`);
+        }
+        if (event.kind === 'assistant_text_delta') {
+          fullText += event.text;
+        }
+        onEvent(event);
+        if (event.kind === 'completed') {
+          streamDone = true;
+          break;
+        }
+      }
+      if (streamDone) break;
+    }
+  }
+
+  buffer += decoder.decode();
+  if (buffer.trim() && !streamDone) {
+    const events = readOpenAiCompatibleStreamEvents(buffer);
+    for (const event of events) {
+      if (event.kind === 'error') {
+        throw new Error(`${request.label} API 流式请求失败：${event.message}`);
+      }
+      if (event.kind === 'assistant_text_delta') {
+        fullText += event.text;
+      }
+      onEvent(event);
+    }
+  }
+
+  return fullText;
 }
 
 export function buildOpenAiCompatibleMessages(
@@ -123,6 +231,50 @@ export function buildChatCompletionsUrl(baseUrl: string): string {
   }
 
   return normalized.endsWith('/chat/completions') ? normalized : `${normalized}/chat/completions`;
+}
+
+export function drainSseBuffer(buffer: string): { blocks: string[]; rest: string } {
+  const normalized = buffer.replace(/\r\n/g, '\n');
+  const parts = normalized.split('\n\n');
+  return {
+    blocks: parts.slice(0, -1),
+    rest: parts[parts.length - 1] ?? ''
+  };
+}
+
+export function readOpenAiCompatibleStreamEvents(block: string): ModelStreamEvent[] {
+  const dataLines: string[] = [];
+  let eventName = 'message';
+
+  for (const rawLine of block.split('\n')) {
+    const line = rawLine.trimEnd();
+    if (line.startsWith('event:')) {
+      eventName = line.slice('event:'.length).trim();
+      continue;
+    }
+    if (line.startsWith('data:')) {
+      dataLines.push(line.slice('data:'.length).trimStart());
+    }
+  }
+
+  if (dataLines.length === 0) return [];
+
+  const data = dataLines.join('\n').trim();
+  if (!data) return [];
+  if (data === '[DONE]') return [{ kind: 'completed', stopReason: 'stop' }];
+  if (eventName === 'error') return [{ kind: 'error', message: data }];
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(data) as unknown;
+  } catch {
+    return [{ kind: 'error', message: '模型流返回了无效 JSON。' }];
+  }
+
+  const providerError = readProviderError(payload);
+  if (providerError) return [{ kind: 'error', message: providerError }];
+
+  return readOpenAiCompatiblePayloadEvents(payload);
 }
 
 async function readResponseText(response: Response): Promise<string> {
@@ -182,6 +334,60 @@ function readFirstAssistantMessage(payload: unknown): string {
   const message = firstChoice.message;
   if (!isRecord(message)) return '';
   return typeof message.content === 'string' ? message.content.trim() : '';
+}
+
+function readFirstAssistantReasoning(payload: unknown): string {
+  if (!isRecord(payload)) return '';
+  const choices = payload.choices;
+  if (!Array.isArray(choices)) return '';
+  const [firstChoice] = choices;
+  if (!isRecord(firstChoice)) return '';
+  const message = firstChoice.message;
+  if (!isRecord(message)) return '';
+  return readReasoningText(message).trim();
+}
+
+function readOpenAiCompatiblePayloadEvents(payload: unknown): ModelStreamEvent[] {
+  if (!isRecord(payload)) return [];
+  const choices = payload.choices;
+  if (!Array.isArray(choices)) return [];
+
+  const events: ModelStreamEvent[] = [];
+  for (const choice of choices) {
+    if (!isRecord(choice)) continue;
+    const delta = isRecord(choice.delta) ? choice.delta : undefined;
+    const message = isRecord(choice.message) ? choice.message : undefined;
+    const source = delta ?? message;
+    if (source) {
+      const content = typeof source.content === 'string' ? source.content : '';
+      if (content) events.push({ kind: 'assistant_text_delta', text: content });
+
+      const reasoning = readReasoningText(source);
+      if (reasoning) events.push({ kind: 'assistant_reasoning_delta', text: reasoning });
+    }
+
+    if (typeof choice.finish_reason === 'string' && choice.finish_reason) {
+      events.push({ kind: 'completed', stopReason: choice.finish_reason });
+    }
+  }
+
+  return events;
+}
+
+function readReasoningText(payload: Record<string, unknown>): string {
+  const candidates = [payload.reasoning_content, payload.reasoning, payload.thinking];
+  for (const value of candidates) {
+    if (typeof value === 'string') return value;
+  }
+  return '';
+}
+
+function readProviderError(payload: unknown): string {
+  if (!isRecord(payload)) return '';
+  const error = payload.error;
+  if (typeof error === 'string') return error;
+  if (isRecord(error) && typeof error.message === 'string') return error.message;
+  return '';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

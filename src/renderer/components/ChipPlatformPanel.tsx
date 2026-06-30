@@ -15,7 +15,7 @@ export function ChipPlatformPanel({ chipId }: ChipPlatformPanelProps) {
         <span className="status-dot" aria-hidden="true" />
         <div>
           <strong>规范源已锁定</strong>
-          <span>面向固定 HK8S8100X 指令、寄存器和语法约束。</span>
+          <span>面向固定 HK64S8x 指令、寄存器和语法约束。</span>
         </div>
       </div>
 

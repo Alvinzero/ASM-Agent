@@ -42,7 +42,7 @@ if (!instructionFile || !registerFile) {
   process.exit(1);
 }
 
-const outputFile = path.resolve('src/shared/spec/hk8s8100x.v0.1.json');
+const outputFile = path.resolve('src/shared/spec/hk64s8x.v0.1.json');
 
 const spec = compileSpec({
   instructionRows: readSheetRows(instructionFile),

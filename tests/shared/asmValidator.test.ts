@@ -3,7 +3,7 @@ import { parseAsm } from '../../src/shared/asm/AsmParser';
 import { validateAsm } from '../../src/shared/asm/AsmValidator';
 import { BuiltInSpecRepository } from '../../src/shared/spec/BuiltInSpecRepository';
 
-const spec = new BuiltInSpecRepository().getByChipId('HK8S8100X');
+const spec = new BuiltInSpecRepository().getByChipId('HK64S8x');
 
 function diagnosticCodes(source: string): string[] {
   return validateAsm(parseAsm(source), spec).map((diagnostic) => diagnostic.code);
@@ -11,7 +11,7 @@ function diagnosticCodes(source: string): string[] {
 
 describe('AsmValidator', () => {
   it('accepts valid zero-operand and k10 instructions', () => {
-    expect(validateAsm(parseAsm('CLRWDT\nJMP 0x008'), spec)).toEqual([]);
+    expect(validateAsm(parseAsm('CLRWDT\nJMP 008H'), spec)).toEqual([]);
   });
 
   it('reports unknown instructions', () => {
@@ -19,7 +19,7 @@ describe('AsmValidator', () => {
   });
 
   it('reports k10 operands outside the ten-bit range', () => {
-    expect(diagnosticCodes('JMP 0x400')).toEqual(['OPERAND_OUT_OF_RANGE']);
+    expect(diagnosticCodes('JMP 400H')).toEqual(['OPERAND_OUT_OF_RANGE']);
   });
 
   it('reports immediate range errors from the most relevant same-mnemonic form', () => {
@@ -27,7 +27,7 @@ describe('AsmValidator', () => {
   });
 
   it('matches same-mnemonic immediate and register forms by syntax shape', () => {
-    expect(validateAsm(parseAsm('ADD A,#0x12\nADD A,0x10'), spec)).toEqual([]);
+    expect(validateAsm(parseAsm('ADD A,#0x12\nADD A,10H'), spec)).toEqual([]);
   });
 
   it('accepts decimal immediate operands', () => {
@@ -38,14 +38,25 @@ describe('AsmValidator', () => {
     expect(validateAsm(parseAsm('ADD A,10H\nBSET 10H,5'), spec)).toEqual([]);
   });
 
+  it('rejects bare numeric register addresses because ASMC requires the H suffix', () => {
+    expect(diagnosticCodes('MOV 38,A')).toEqual(['OPERAND_SHAPE_MISMATCH']);
+    expect(diagnosticCodes('MOV 0x38,A')).toEqual(['OPERAND_SHAPE_MISMATCH']);
+  });
+
+  it('rejects bare numeric jump and call addresses because ASMC requires the H suffix', () => {
+    expect(diagnosticCodes('CALL 46')).toEqual(['OPERAND_SHAPE_MISMATCH']);
+    expect(diagnosticCodes('JMP 0x20')).toEqual(['OPERAND_SHAPE_MISMATCH']);
+    expect(validateAsm(parseAsm('CALL 46H\nJMP 20H'), spec)).toEqual([]);
+  });
+
   it('reports operand shape mismatches for malformed ADD forms', () => {
     expect(diagnosticCodes('ADD 0x10,A')).toEqual(['OPERAND_SHAPE_MISMATCH']);
     expect(diagnosticCodes('ADD A')).toEqual(['OPERAND_SHAPE_MISMATCH']);
   });
 
   it('validates r8,b operands and reports bit range errors', () => {
-    expect(validateAsm(parseAsm('BSET 0x10,5'), spec)).toEqual([]);
-    expect(diagnosticCodes('BSET 0x10,8')).toEqual(['OPERAND_OUT_OF_RANGE']);
+    expect(validateAsm(parseAsm('BSET 10H,5'), spec)).toEqual([]);
+    expect(diagnosticCodes('BSET 10H,8')).toEqual(['OPERAND_OUT_OF_RANGE']);
   });
 
   it('resolves register names for r8 operands', () => {

@@ -1,7 +1,11 @@
-import type { CompleteChatRequest } from '../../shared/agent/ModelAdapter';
+import {
+  drainSseBuffer,
+  readOpenAiCompatibleStreamEvents,
+  type CompleteChatRequest,
+  type ModelStreamEventHandler
+} from '../../shared/agent/ModelAdapter';
 
 type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
-type StreamChunkHandler = (chunk: string) => void;
 
 const COMPLETE_CHAT_PROXY_ENDPOINT = '/api/complete-chat';
 const COMPLETE_CHAT_STREAM_PROXY_ENDPOINT = '/api/complete-chat-stream';
@@ -45,7 +49,7 @@ export async function completeChatViaLocalProxy(
 
 export async function streamChatViaLocalProxy(
   request: CompleteChatRequest,
-  onChunk: StreamChunkHandler,
+  onEvent: ModelStreamEventHandler,
   fetchImpl: FetchLike = fetch,
   signal?: AbortSignal
 ): Promise<string> {
@@ -90,31 +94,35 @@ export async function streamChatViaLocalProxy(
     buffer = parsed.rest;
 
     for (const block of parsed.blocks) {
-      const event = readSseEvent(block);
-      if (!event) continue;
-      if (event.done) {
-        streamDone = true;
-        break;
+      const events = readOpenAiCompatibleStreamEvents(block);
+      for (const event of events) {
+        if (event.kind === 'error') {
+          throw new Error(`网页版本地流式模型代理请求失败：${event.message}`);
+        }
+        if (event.kind === 'assistant_text_delta') {
+          fullText += event.text;
+        }
+        onEvent(event);
+        if (event.kind === 'completed') {
+          streamDone = true;
+          break;
+        }
       }
-      if (event.error) {
-        throw new Error(`网页版本地流式模型代理请求失败：${event.error}`);
-      }
-      if (event.content) {
-        fullText += event.content;
-        onChunk(event.content);
-      }
+      if (streamDone) break;
     }
   }
 
   buffer += decoder.decode();
   if (buffer.trim() && !streamDone) {
-    const event = readSseEvent(buffer);
-    if (event?.error) {
-      throw new Error(`网页版本地流式模型代理请求失败：${event.error}`);
-    }
-    if (event?.content) {
-      fullText += event.content;
-      onChunk(event.content);
+    const events = readOpenAiCompatibleStreamEvents(buffer);
+    for (const event of events) {
+      if (event.kind === 'error') {
+        throw new Error(`网页版本地流式模型代理请求失败：${event.message}`);
+      }
+      if (event.kind === 'assistant_text_delta') {
+        fullText += event.text;
+      }
+      onEvent(event);
     }
   }
 
@@ -149,57 +157,6 @@ function readProxyError(payload: unknown, status: number): string {
   }
 
   return `网页版本地模型代理请求失败：HTTP ${status}`;
-}
-
-function drainSseBuffer(buffer: string): { blocks: string[]; rest: string } {
-  const normalized = buffer.replace(/\r\n/g, '\n');
-  const parts = normalized.split('\n\n');
-  return {
-    blocks: parts.slice(0, -1),
-    rest: parts[parts.length - 1] ?? ''
-  };
-}
-
-function readSseEvent(block: string): { content?: string; done?: boolean; error?: string } | null {
-  const dataLines: string[] = [];
-  let eventName = 'message';
-
-  for (const rawLine of block.split('\n')) {
-    const line = rawLine.trimEnd();
-    if (line.startsWith('event:')) {
-      eventName = line.slice('event:'.length).trim();
-      continue;
-    }
-    if (line.startsWith('data:')) {
-      dataLines.push(line.slice('data:'.length).trimStart());
-    }
-  }
-
-  if (dataLines.length === 0) return null;
-
-  const data = dataLines.join('\n').trim();
-  if (!data) return null;
-  if (data === '[DONE]') return { done: true };
-  if (eventName === 'error') return { error: data };
-
-  const payload = parseProxyJson(data, 'application/json');
-  if (isRecord(payload) && typeof payload.error === 'string') {
-    return { error: payload.error };
-  }
-
-  const content = readOpenAiDeltaContent(payload) || readProxyContent(payload);
-  return content ? { content } : null;
-}
-
-function readOpenAiDeltaContent(payload: unknown): string {
-  if (!isRecord(payload)) return '';
-  const choices = payload.choices;
-  if (!Array.isArray(choices)) return '';
-  const [firstChoice] = choices;
-  if (!isRecord(firstChoice)) return '';
-  const delta = firstChoice.delta;
-  if (!isRecord(delta)) return '';
-  return typeof delta.content === 'string' ? delta.content : '';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

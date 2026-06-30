@@ -86,6 +86,10 @@ function expectZeroCssLength(value: string) {
   expect(['0', '0px']).toContain(value);
 }
 
+function expectResolvedColor(value: string, cssVariable: string, resolvedRgb: string) {
+  expect([cssVariable, resolvedRgb]).toContain(value);
+}
+
 describe('chat layout scrolling', () => {
   afterEach(() => {
     document.head.querySelectorAll('[data-test-style="app-css"]').forEach((node) => node.remove());
@@ -179,7 +183,7 @@ describe('chat layout scrolling', () => {
         </nav>
         <div class="chat-topbar-actions">
           <div class="topbar-utility-actions">
-            <span class="topbar-version">v0.1.0-web</span>
+            <span class="topbar-version">v0.0.2</span>
           </div>
         </div>
       </header>
@@ -228,7 +232,7 @@ describe('chat layout scrolling', () => {
     expect(preStyle.overflowX).toBe('auto');
   });
 
-  it('renders conversation text turns without boxed message bubbles', () => {
+  it('renders conversation turns as a Codex-style chat stream', () => {
     installAppStyles();
     document.body.innerHTML = `
       <div class="message-list">
@@ -240,37 +244,68 @@ describe('chat layout scrolling', () => {
           <span>Assistant</span>
           <div class="message-content">
             <div class="markdown-message">
-              <p>I will generate main.asm with HK8S8100X rules.</p>
+              <p>I will generate main.asm with HK64S8x rules.</p>
             </div>
           </div>
         </article>
-        <article class="message-bubble assistant trace-bubble">
-          <span>Assistant</span>
+        <article class="trace-bubble" aria-label="智能体执行过程">
           <div class="agent-trace">
-            <div class="trace-tool-group">Ran 1 command</div>
+            <div class="trace-narration">
+              <span>收到需求后，按 HK64S8x ASM 工程生成任务来处理。</span>
+            </div>
+            <details class="trace-tool-group">
+              <summary class="trace-tg-head">Ran 1 command</summary>
+            </details>
+            <div class="trace-action">
+              <span class="trace-action-title">正在校验寄存器和中断入口。</span>
+            </div>
+            <div class="trace-edit">
+              <span>编辑 main.asm。</span>
+            </div>
           </div>
         </article>
       </div>
     `;
 
     const userStyle = getComputedStyle(document.querySelector('.message-bubble.user') as HTMLElement);
+    const userLabelStyle = getComputedStyle(document.querySelector('.message-bubble.user > span') as HTMLElement);
+    const userTextStyle = getComputedStyle(document.querySelector('.message-bubble.user p') as HTMLElement);
     const assistantStyle = getComputedStyle(document.querySelector('.message-bubble.assistant') as HTMLElement);
     const traceStyle = getComputedStyle(document.querySelector('.trace-bubble') as HTMLElement);
+    const traceNarrationStyle = getComputedStyle(document.querySelector('.trace-narration') as HTMLElement);
+    const traceActionStyle = getComputedStyle(document.querySelector('.trace-action') as HTMLElement);
+    const traceActionTitleStyle = getComputedStyle(document.querySelector('.trace-action-title') as HTMLElement);
+    const traceEditStyle = getComputedStyle(document.querySelector('.trace-edit') as HTMLElement);
 
-    expect(userStyle.alignSelf).toBe('stretch');
+    expect(userStyle.alignSelf).toBe('flex-end');
+    expect(userStyle.width).toBe('fit-content');
     expect(userStyle.borderTopWidth).toBe('0px');
-    expect(userStyle.backgroundColor).toBe('rgba(0, 0, 0, 0)');
-    expect(['', 'none']).toContain(userStyle.backgroundImage);
+    expect(userStyle.backgroundColor).toBe('rgb(241, 244, 248)');
     expect(userStyle.boxShadow).toBe('none');
     expect(userStyle.color).not.toBe('rgb(255, 255, 255)');
+    expect(userLabelStyle.position).toBe('absolute');
+    expect(userLabelStyle.width).toBe('1px');
+    expectResolvedColor(userTextStyle.color, 'var(--text-primary)', 'rgb(19, 28, 46)');
+    expect(userTextStyle.fontWeight).toBe('500');
 
+    expect(assistantStyle.alignSelf).toBe('flex-start');
     expect(assistantStyle.borderTopWidth).toBe('0px');
     expect(assistantStyle.backgroundColor).toBe('rgba(0, 0, 0, 0)');
     expect(assistantStyle.boxShadow).toBe('none');
 
+    expect(traceStyle.alignSelf).toBe('flex-start');
     expect(traceStyle.borderTopWidth).toBe('0px');
     expect(traceStyle.backgroundColor).toBe('rgba(0, 0, 0, 0)');
     expect(traceStyle.boxShadow).toBe('none');
+    expectResolvedColor(traceStyle.color, 'var(--text-primary)', 'rgb(19, 28, 46)');
+    expect(traceNarrationStyle.fontSize).toBe('14px');
+    expectResolvedColor(traceNarrationStyle.color, 'var(--text-primary)', 'rgb(19, 28, 46)');
+    expect(traceActionStyle.fontSize).toBe('14px');
+    expectResolvedColor(traceActionStyle.color, 'var(--text-primary)', 'rgb(19, 28, 46)');
+    expect(traceActionTitleStyle.fontWeight).toBe('400');
+    expectResolvedColor(traceActionTitleStyle.color, 'var(--text-primary)', 'rgb(19, 28, 46)');
+    expect(traceEditStyle.fontSize).toBe('14px');
+    expectResolvedColor(traceEditStyle.color, 'var(--text-primary)', 'rgb(19, 28, 46)');
   });
 
   it('uses a codex-style composer without a visible prompt label', () => {
@@ -293,6 +328,8 @@ describe('chat layout scrolling', () => {
     expect(formStyle.boxShadow).not.toContain('214, 38, 47');
     expect(formStyle.boxShadow).not.toContain('inset');
     expect(textareaStyle.borderTopWidth).toBe('0px');
+    expectResolvedColor(textareaStyle.color, 'var(--text-primary)', 'rgb(19, 28, 46)');
+    expectResolvedColor(textareaStyle.caretColor, 'var(--accent)', 'rgb(27, 98, 232)');
     expect(textareaStyle.resize).toBe('none');
     expect(sendButtonStyle.width).toBe('42px');
     expect(sendButtonStyle.height).toBe('42px');

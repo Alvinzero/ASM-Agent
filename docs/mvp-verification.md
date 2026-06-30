@@ -1,12 +1,12 @@
 # MVP 端到端验证
 
-本文档定义 ASM Agent MVP 的端到端验证范围、验证映射、执行命令和预期结果。当前 MVP 是 Windows-first 本地桌面应用：用户用自然语言描述 ASM 工程需求，系统基于内置固定 HK8S8100X 公司芯片规范生成计划和 ASM 工程。
+本文档定义 ASM Agent MVP 的端到端验证范围、验证映射、执行命令和预期结果。当前 MVP 是 Windows-first 本地桌面应用：用户用自然语言描述 ASM 工程需求，系统基于内置固定 HK64S8x 公司芯片规范生成计划和 ASM 工程。
 
 ## 验证范围
 
 MVP 验证应覆盖以下能力：
 
-- 应用可以加载内置 HK8S8100X spec library，作为生成计划和 ASM 工程的固定规范来源。
+- 应用可以加载内置 HK64S8x spec library，作为生成计划和 ASM 工程的固定规范来源。
 - 用户可以输入自然语言 ASM 工程需求。
 - 系统可以根据用户需求生成可读的 generation plan。
 - 系统可以生成完整 ASM 工程树，包括工程目录、源文件和必要的项目文件。
@@ -23,7 +23,7 @@ MVP 验证应覆盖以下能力：
 - simulate generated program behavior
 - burn or flash firmware
 - execute code on real hardware
-- verify behavior on physical HK8S8100X hardware
+- verify behavior on physical HK64S8x hardware
 
 这些项目是明确的 MVP non-goals。即使下方命令全部退出 0，也只能说明当前应用的 TypeScript、测试、构建和 Windows 打包流程通过；不能把它解释为编译、仿真、烧录或真实硬件验证已经完成。
 
@@ -52,7 +52,7 @@ MVP 验证应覆盖以下能力：
 - `npm run test`: 退出码 0，9 个测试文件、81 个测试全部通过。
 - `npm run build`: 退出码 0，主进程 TypeScript 构建和 renderer Vite 构建完成。
 - `npm run package:win`: 退出码 0，`electron-builder.yml` 被加载，`release/ASM Agent Setup 0.1.0.exe` 已生成。
-- Renderer 手动检查: `http://127.0.0.1:5173/` 可打开，页面包含 ASM assistant 主界面、`HK8S8100X`、`ASM 功能需求`、`生成计划`、`生成工程`，没有“导入规范”入口。
+- Renderer 手动检查: `http://127.0.0.1:5173/` 可打开，页面包含 ASM assistant 主界面、`HK64S8x`、`ASM 功能需求`、`生成计划`、`生成工程`，没有“导入规范”入口。
 - Electron 启动检查: Electron 桌面进程可启动，窗口标题为 `ASM Agent`。
 
 备注：
@@ -64,7 +64,7 @@ MVP 验证应覆盖以下能力：
 
 | 验证范围项 | 自动化验证或手动检查 |
 | --- | --- |
-| 内置 HK8S8100X spec library | 运行 `npm run test`，重点关注 `tests/shared/specRepository.test.ts` 或相关 spec repository 测试。 |
+| 内置 HK64S8x spec library | 运行 `npm run test`，重点关注 `tests/shared/specRepository.test.ts` 或相关 spec repository 测试。 |
 | 自然语言 ASM 需求接收和 generation plan | 运行 `npm run test`，重点关注 `tests/shared/agentService.test.ts`。 |
 | ASM 工程树生成 | 运行 `npm run test`，重点关注 `tests/shared/projectGenerator.test.ts`。 |
 | 拒绝 unsupported instructions | 运行 `npm run test`，重点关注 `tests/shared/asmValidator.test.ts` 和 `tests/shared/instructionEncoder.test.ts`。 |

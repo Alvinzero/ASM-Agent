@@ -23,7 +23,7 @@ function expectReady(result: PlanResult): GenerationPlan {
 async function createPlan(requirement: string): Promise<GenerationPlan> {
   return expectReady(
     await new AgentService(repository).createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement
     })
   );
@@ -34,7 +34,7 @@ function generateProject(plan: GenerationPlan, projectName = 'acceptance-demo'):
     projectName,
     requirement: 'acceptance test requirement',
     plan,
-    spec: repository.getByChipId('HK8S8100X')
+    spec: repository.getByChipId('HK64S8x')
   });
 }
 
@@ -63,15 +63,15 @@ describe('ASM Agent MVP acceptance cases', () => {
     }
   });
 
-  it('keeps built-in HK8S8100X spec reads isolated from caller mutation', () => {
-    const firstRead = repository.getByChipId('HK8S8100X');
+  it('keeps built-in HK64S8x spec reads isolated from caller mutation', () => {
+    const firstRead = repository.getByChipId('HK64S8x');
     firstRead.chipId = 'MUTATED';
     firstRead.instructions[0].mnemonic = 'MUTATED';
     firstRead.registers[0].name = 'MUTATED';
 
-    const secondRead = repository.getByChipId('HK8S8100X');
+    const secondRead = repository.getByChipId('HK64S8x');
 
-    expect(secondRead.chipId).toBe('HK8S8100X');
+    expect(secondRead.chipId).toBe('HK64S8x');
     expect(secondRead.instructions[0].mnemonic).not.toBe('MUTATED');
     expect(secondRead.registers[0].name).not.toBe('MUTATED');
   });
@@ -126,7 +126,7 @@ describe('ASM Agent MVP acceptance cases', () => {
       .map((file) => file.content)
       .join('\n');
 
-    expect(validateAsm(parseAsm(asmSource), repository.getByChipId('HK8S8100X'))).toEqual([]);
+    expect(validateAsm(parseAsm(asmSource), repository.getByChipId('HK64S8x'))).toEqual([]);
     expect(fileContent(project, 'src/main.asm')).toContain('CALL gpio_init');
     expect(fileContent(project, 'src/main.asm')).toContain('CALL timer0_init');
     expect(fileContent(project, 'src/main.asm')).toContain('CALL wdt_service');
@@ -147,9 +147,9 @@ describe('ASM Agent MVP acceptance cases', () => {
   it('fails fast when an interrupt project is requested but the built-in spec lacks RETI', async () => {
     const plan = await createPlan('Generate GPIO PA0 interrupt project.');
     const specWithoutReti = {
-      ...repository.getByChipId('HK8S8100X'),
+      ...repository.getByChipId('HK64S8x'),
       instructions: repository
-        .getByChipId('HK8S8100X')
+        .getByChipId('HK64S8x')
         .instructions.filter((instruction) => instruction.mnemonic !== 'RETI')
     };
 
@@ -171,7 +171,7 @@ describe('ASM Agent MVP acceptance cases', () => {
 
     expect(projectDir).toBe(path.join(exportRoot, 'exported-demo'));
     expect(fs.readFileSync(path.join(projectDir, 'src/main.asm'), 'utf8')).toContain('main_loop:');
-    expect(fs.readFileSync(path.join(projectDir, 'docs/spec-compliance.md'), 'utf8')).toContain('HK8S8100X');
+    expect(fs.readFileSync(path.join(projectDir, 'docs/spec-compliance.md'), 'utf8')).toContain('HK64S8x');
   });
 
   it('rejects generated file paths that traverse with Windows backslashes', () => {

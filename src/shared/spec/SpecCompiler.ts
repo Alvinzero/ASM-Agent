@@ -1,6 +1,6 @@
 import type { ChipSpec, InstructionForm, OperandKind, RegisterBit, RegisterSpec } from './ChipSpec';
 
-export const DEFAULT_DOCUMENT_SOURCE = 'HK8S8100X_\u89c4\u683c\u4e66 V0.1.docx';
+export const DEFAULT_DOCUMENT_SOURCE = 'HK64S8x_\u89c4\u683c\u4e66 V0.1.docx';
 
 export type SpecSourceRow = Record<string, string | number | undefined | null>;
 
@@ -239,8 +239,8 @@ function isRegisterSourceRow(input: SpecSourceRow | RegisterSourceRow): input is
 
 export function compileSpec(input: CompileSpecInput): ChipSpec {
   return {
-    chipId: input.chipId ?? 'HK8S8100X',
-    displayName: input.displayName ?? 'HK8S8100X',
+    chipId: input.chipId ?? 'HK64S8x',
+    displayName: input.displayName ?? 'HK64S8x',
     version: input.version ?? '0.1',
     instructionSource: input.instructionSource ?? 'instruction_set.xlsx',
     registerSource: input.registerSource ?? 'register_set.xlsx',

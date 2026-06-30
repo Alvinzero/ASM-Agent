@@ -4,6 +4,7 @@ import { closeAuthStore, registerAuthHandlers } from './ipc/authHandlers';
 import { registerAgentHandlers } from './ipc/agentHandlers';
 import { registerFileHandlers } from './ipc/fileHandlers';
 import { registerProjectHandlers } from './ipc/projectHandlers';
+import { checkForAppUpdates, registerUpdateHandlers } from './ipc/updateHandlers';
 
 function getTrustedDevServerUrl(): string | undefined {
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
@@ -38,12 +39,17 @@ function createWindow(): void {
   } else {
     void mainWindow.loadFile(path.join(app.getAppPath(), 'dist-renderer/index.html'));
   }
+
+  mainWindow.webContents.once('did-finish-load', () => {
+    void checkForAppUpdates();
+  });
 }
 
 registerAgentHandlers();
 registerAuthHandlers();
 registerFileHandlers();
 registerProjectHandlers();
+registerUpdateHandlers();
 
 void app.whenReady().then(createWindow);
 

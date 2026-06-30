@@ -4,6 +4,7 @@ import type {
   GeneratedProject,
   GenerateProjectInput
 } from '../project/ProjectTypes';
+import { formatAsmDiagnosticForUser } from './AsmQualityGate';
 import { parseAsm } from './AsmParser';
 import { validateAsm } from './AsmValidator';
 
@@ -483,10 +484,8 @@ function assertAsmDraftsValid(drafts: FileDraft[], spec: ChipSpec): void {
   const diagnostics = validateAsm(parseAsm(mergedSource), spec);
 
   if (diagnostics.length > 0) {
-    const summary = diagnostics
-      .map((diagnostic) => `${diagnostic.code}: ${diagnostic.message}`)
-      .join('; ');
-    throw new Error(`Generated project ASM failed built-in validation: ${summary}`);
+    const summary = diagnostics.map(formatAsmDiagnosticForUser).join('；');
+    throw new Error(`生成的工程 ASM 未通过内置规范校验：${summary}`);
   }
 }
 

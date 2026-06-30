@@ -1,10 +1,10 @@
 {
-  "chipId": "HK8S8100X",
-  "displayName": "HK8S8100X",
+  "chipId": "HK64S8x",
+  "displayName": "HK64S8x",
   "version": "0.1",
   "instructionSource": "instruction_set.xlsx",
   "registerSource": "register_set.xlsx",
-  "documentSource": "HK8S8100X_\u89c4\u683c\u4e66 V0.1.docx",
+  "documentSource": "HK64S8x_\u89c4\u683c\u4e66 V0.1.docx",
   "instructions": [
     {
       "mnemonic": "NOP",

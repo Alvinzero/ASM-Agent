@@ -35,14 +35,20 @@ function NarrationNode({ node }: { node: TraceNode }) {
 function CommandsNode({ node }: { node: TraceNode }) {
   const commands = node.commands ?? [];
   const running = node.status === 'running';
+  const commandCount = commands.length;
+  const title = commandCount > 0 && !node.text.includes('条命令') ? `${node.text} ${commandCount} 条命令` : node.text;
+
   return (
-    <div className={`trace-tool-group${running ? ' running' : ''}`}>
-      <div className="trace-tg-head">
+    <details className={`trace-tool-group${running ? ' running' : ''}`} open={running || undefined}>
+      <summary
+        className="trace-tg-head"
+      >
         <span className="trace-tg-ico" aria-hidden="true">
           {running ? <span className="trace-spinner" /> : <span className="trace-check">✓</span>}
         </span>
-        <span className="trace-tg-title">{node.text}</span>
-      </div>
+        <span className="trace-tg-title">{title}</span>
+        <span className="trace-tg-chevron" aria-hidden="true" />
+      </summary>
       <div className="trace-tg-body">
         {commands.map((command, index) => (
           <div className="trace-cmd" key={index}>
@@ -56,7 +62,26 @@ function CommandsNode({ node }: { node: TraceNode }) {
           </div>
         ))}
       </div>
-    </div>
+    </details>
+  );
+}
+
+function ReasoningNode({ node }: { node: TraceNode }) {
+  const running = node.status === 'running';
+  return (
+    <details className={`trace-reasoning${running ? ' running' : ''}`} open={running || undefined}>
+      <summary className="trace-reasoning-head">
+        <span className="trace-reasoning-ico" aria-hidden="true">
+          {running ? <span className="trace-spinner" /> : <span className="trace-check">✓</span>}
+        </span>
+        <span className="trace-reasoning-title">{running ? '模型正在思考' : '模型思考'}</span>
+        <span className="trace-tg-chevron" aria-hidden="true" />
+      </summary>
+      <div className="trace-reasoning-body">
+        {node.text}
+        {running ? <span className="trace-cursor" aria-hidden="true" /> : null}
+      </div>
+    </details>
   );
 }
 
@@ -90,6 +115,7 @@ export function AgentTrace({ nodes }: AgentTraceProps) {
       {nodes.map((node) => {
         if (node.type === 'narration') return <NarrationNode node={node} key={node.id} />;
         if (node.type === 'commands') return <CommandsNode node={node} key={node.id} />;
+        if (node.type === 'reasoning') return <ReasoningNode node={node} key={node.id} />;
         if (node.type === 'action') return <ActionNode node={node} key={node.id} />;
         return <EditNode node={node} key={node.id} />;
       })}

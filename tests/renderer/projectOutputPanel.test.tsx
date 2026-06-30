@@ -18,7 +18,7 @@ function createSession(): AgentSessionState {
 
   return {
     sessionId: 'test-session',
-    chipId: 'HK8S8100X',
+    chipId: 'HK64S8x',
     apiVersion: '0.1.0',
     isBridgeReady: true,
     requirement: '',
@@ -49,6 +49,7 @@ function createSession(): AgentSessionState {
       project: null,
       asmFile,
       messages: [],
+      loading: 'idle' as const,
       error: null
     })),
     restoreSnapshot: vi.fn()

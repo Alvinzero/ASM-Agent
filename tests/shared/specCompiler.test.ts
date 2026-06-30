@@ -147,7 +147,7 @@ describe('SpecCompiler', () => {
     });
   });
 
-  it('compiles normalized rows into the HK8S8100X chip spec shell', () => {
+  it('compiles normalized rows into the HK64S8x chip spec shell', () => {
     const spec = compileSpec({
       instructionRows: [
         {
@@ -172,16 +172,16 @@ describe('SpecCompiler', () => {
       ],
       instructionSource: 'instruction_set.xlsx',
       registerSource: 'register_set.xlsx',
-      documentSource: 'HK8S8100X_spec.docx'
+      documentSource: 'HK64S8x_spec.docx'
     });
 
     expect(spec).toMatchObject({
-      chipId: 'HK8S8100X',
-      displayName: 'HK8S8100X',
+      chipId: 'HK64S8x',
+      displayName: 'HK64S8x',
       version: '0.1',
       instructionSource: 'instruction_set.xlsx',
       registerSource: 'register_set.xlsx',
-      documentSource: 'HK8S8100X_spec.docx',
+      documentSource: 'HK64S8x_spec.docx',
       memory: [
         { name: 'SFR', start: 0x00, end: 0x7f },
         { name: 'RAM', start: 0x80, end: 0xbf }
@@ -225,7 +225,7 @@ describe('SpecCompiler', () => {
       ]
     });
 
-    expect(spec.documentSource).toBe('HK8S8100X_\u89c4\u683c\u4e66 V0.1.docx');
+    expect(spec.documentSource).toBe('HK64S8x_\u89c4\u683c\u4e66 V0.1.docx');
   });
 
   it('rejects immediate-syntax instruction whose operands are mislabeled (e.g. MOV A,#K as r8)', () => {

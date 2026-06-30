@@ -3,7 +3,7 @@ import { encodeInstruction } from '../../src/shared/asm/InstructionEncoder';
 import { BuiltInSpecRepository } from '../../src/shared/spec/BuiltInSpecRepository';
 import type { InstructionForm } from '../../src/shared/spec/ChipSpec';
 
-const spec = new BuiltInSpecRepository().getByChipId('HK8S8100X');
+const spec = new BuiltInSpecRepository().getByChipId('HK64S8x');
 
 function findForm(mnemonic: string, asmSyntax: string): InstructionForm {
   const form = spec.instructions.find(

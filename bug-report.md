@@ -163,7 +163,7 @@ HTTP Status: 200
 
 3. **知识库面板** ✅
    - 导航切换逻辑正确 (activeNav: 'home' | 'knowledge')
-   - 内置 HK8S8100X 指令集参考内容
+   - 内置 HK64S8x 指令集参考内容
    - UI 完整实现
 
 4. **会话管理** ✅

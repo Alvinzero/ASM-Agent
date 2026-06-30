@@ -89,7 +89,7 @@ describe('assistant flow', () => {
         status: 'ready',
         plan: {
           summary: '生成 Timer0 + GPIO ASM 工程',
-          chipId: 'HK8S8100X',
+          chipId: 'HK64S8x',
           features: ['Timer0', 'GPIO'],
           files: ['startup/reset.asm', 'src/main.asm'],
           usesInterrupt: true,
@@ -235,7 +235,7 @@ describe('assistant flow', () => {
     expect(screen.queryByLabelText('ASM Agent 导航')).not.toBeInTheDocument();
   });
 
-  it('creates a plan from natural language requirements for HK8S8100X', async () => {
+  it('creates a plan from natural language requirements for HK64S8x', async () => {
     vi.useFakeTimers();
     await renderAuthenticatedApp();
 
@@ -247,9 +247,9 @@ describe('assistant flow', () => {
 
     expect(screen.getAllByText(/main\.asm/).length).toBeGreaterThan(0);
     expect(screen.queryByLabelText('计划摘要')).not.toBeInTheDocument();
-    expect(screen.getAllByText('HK8S8100X').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('HK64S8x').length).toBeGreaterThan(0);
     expect(window.asmAgent?.createPlan).toHaveBeenCalledWith({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: '使用 Timer0 周期中断翻转 PA0 输出'
     });
   });
@@ -259,7 +259,7 @@ describe('assistant flow', () => {
     await renderAuthenticatedApp();
 
     const requirement = screen.getByRole('textbox') as HTMLTextAreaElement;
-    fireEvent.change(requirement, { target: { value: 'Generate HK8S8100X GPIO project.' } });
+    fireEvent.change(requirement, { target: { value: 'Generate HK64S8x GPIO project.' } });
     fireEvent.keyDown(requirement, { key: 'Enter', code: 'Enter' });
 
     expect(requirement).toHaveValue('');
@@ -268,8 +268,8 @@ describe('assistant flow', () => {
     expect(screen.getAllByText(/main\.asm/).length).toBeGreaterThan(0);
     expect(screen.queryByLabelText('计划摘要')).not.toBeInTheDocument();
     expect(window.asmAgent?.createPlan).toHaveBeenCalledWith({
-      chipId: 'HK8S8100X',
-      requirement: 'Generate HK8S8100X GPIO project.'
+      chipId: 'HK64S8x',
+      requirement: 'Generate HK64S8x GPIO project.'
     });
   });
 
@@ -327,7 +327,7 @@ describe('assistant flow', () => {
     expect(document.querySelector('.output-panel')).toBeInTheDocument();
 
     const requirement = screen.getByRole('textbox') as HTMLTextAreaElement;
-    fireEvent.change(requirement, { target: { value: 'Generate HK8S8100X GPIO ASM project.' } });
+    fireEvent.change(requirement, { target: { value: 'Generate HK64S8x GPIO ASM project.' } });
     fireEvent.keyDown(requirement, { key: 'Enter', code: 'Enter' });
 
     await advanceLocalGeneration();
@@ -346,7 +346,7 @@ describe('assistant flow', () => {
     await renderAuthenticatedApp();
 
     const requirement = screen.getByRole('textbox') as HTMLTextAreaElement;
-    fireEvent.change(requirement, { target: { value: 'Generate HK8S8100X GPIO ASM project.' } });
+    fireEvent.change(requirement, { target: { value: 'Generate HK64S8x GPIO ASM project.' } });
     fireEvent.keyDown(requirement, { key: 'Enter', code: 'Enter' });
 
     await advanceLocalGeneration();
@@ -361,7 +361,7 @@ describe('assistant flow', () => {
     await renderAuthenticatedApp();
 
     const requirement = screen.getByRole('textbox') as HTMLTextAreaElement;
-    fireEvent.change(requirement, { target: { value: 'Generate HK8S8100X GPIO ASM project.' } });
+    fireEvent.change(requirement, { target: { value: 'Generate HK64S8x GPIO ASM project.' } });
     fireEvent.keyDown(requirement, { key: 'Enter', code: 'Enter' });
 
     await advanceLocalGeneration();
@@ -414,11 +414,35 @@ describe('assistant flow', () => {
     ]);
   });
 
+  it('loads spec-driven safe prompts from every quick-start card', async () => {
+    await renderAuthenticatedApp();
+
+    const requirement = screen.getByLabelText('ASM 功能需求') as HTMLTextAreaElement;
+    const examples = [
+      { title: 'Timer0 精确定时中断', keyword: 'Timer0' },
+      { title: 'GPIO 输出控制', keyword: 'PA0' },
+      { title: '外部中断响应', keyword: 'PA1' },
+      { title: '看门狗清狗流程', keyword: 'WDT' }
+    ];
+
+    for (const example of examples) {
+      fireEvent.click(screen.getByRole('button', { name: new RegExp(example.title) }));
+
+      expect(requirement.value).toContain('HK64S8x');
+      expect(requirement.value).toContain(example.keyword);
+      expect(requirement.value).toContain('parseAsm + validateAsm');
+      expect(requirement.value).toContain('asm 代码块');
+      expect(requirement.value).toContain('直接返回');
+      expect(requirement.value).toContain('不要编造');
+      expect(requirement.value).toContain('未确认寄存器');
+    }
+  });
+
   it('hides the welcome spec-ready module', async () => {
     await renderAuthenticatedApp();
 
     expect(document.querySelector('.spec-ready-card')).not.toBeInTheDocument();
-    expect(screen.queryByText('HK8S8100X ASM 规范库 已就绪')).not.toBeInTheDocument();
+    expect(screen.queryByText('HK64S8x ASM 规范库 已就绪')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '查看规范库' })).not.toBeInTheDocument();
   });
 
@@ -431,7 +455,7 @@ describe('assistant flow', () => {
     expect(brandLogo).not.toBeNull();
     expect(brandLogo.getAttribute('src')).toBe('hsxp-logo.jpg');
     expect(screen.getByText('航顺 ASM Agent')).toBeInTheDocument();
-    expect(screen.getByText('HK8S8100X 工程助手')).toBeInTheDocument();
+    expect(screen.getByText('HK64S8x 工程助手')).toBeInTheDocument();
     expect(screen.getByText('规范库已锁定')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '新建对话' })).toBeInTheDocument();
     expect(screen.queryByText('目标平台')).not.toBeInTheDocument();
@@ -449,7 +473,7 @@ describe('assistant flow', () => {
     expect(within(modelMenu).getByRole('option', { name: 'DeepSeek' })).toBeInTheDocument();
     expect(within(modelMenu).getByRole('option', { name: 'GLM' })).toBeInTheDocument();
     expect(within(modelMenu).getByRole('option', { name: 'GPT' })).toBeInTheDocument();
-    expect(within(modelMenu).queryByRole('option', { name: 'HK8S8100X Fast Agent' })).not.toBeInTheDocument();
+    expect(within(modelMenu).queryByRole('option', { name: 'HK64S8x Fast Agent' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: '模型配置' })).not.toBeInTheDocument();
     expect(document.querySelector('.topbar-model')).not.toBeInTheDocument();
     expect(document.querySelector('.composer-hints')).not.toBeInTheDocument();
@@ -468,7 +492,7 @@ describe('assistant flow', () => {
 
     await advanceLocalGeneration();
     expect(window.asmAgent?.createPlan).toHaveBeenCalledWith({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: '使用 Timer0 周期中断翻转 PA0 输出'
     });
   });
@@ -498,7 +522,7 @@ describe('assistant flow', () => {
     vi.useFakeTimers();
     await renderAuthenticatedApp();
 
-    const firstRequirement = 'Generate HK8S8100X GPIO ASM project.';
+    const firstRequirement = 'Generate HK64S8x GPIO ASM project.';
     const requirement = document.querySelector('#asm-requirement') as HTMLTextAreaElement;
     fireEvent.change(requirement, { target: { value: firstRequirement } });
     fireEvent.keyDown(requirement, { key: 'Enter', code: 'Enter' });
@@ -513,13 +537,53 @@ describe('assistant flow', () => {
     expect(screen.queryByText(firstRequirement)).not.toBeInTheDocument();
 
     const archivedConversation = Array.from(document.querySelectorAll<HTMLElement>('.conversation-item')).find((item) =>
-      item.textContent?.includes('Generate HK8S8100X GPIO')
+      item.textContent?.includes('Generate HK64S8x GPIO')
     );
     expect(archivedConversation).toBeDefined();
 
     fireEvent.click(archivedConversation as HTMLElement);
 
     expect(screen.getByText(firstRequirement)).toBeInTheDocument();
+    expect(document.querySelector('.output-panel')?.textContent).toContain('main.asm');
+  });
+
+  it('persists authenticated user conversations across app reloads', async () => {
+    vi.useFakeTimers();
+    const firstRender = render(<App />);
+    await findWorkspaceShell();
+
+    const firstRequirement = '持久化会话 A';
+    fireEvent.change(screen.getByLabelText('ASM 功能需求'), { target: { value: firstRequirement } });
+    fireEvent.click(screen.getByRole('button', { name: '发送需求' }));
+    await advanceLocalGeneration();
+
+    fireEvent.click(screen.getByRole('button', { name: '新建对话' }));
+
+    const secondRequirement = '持久化会话 B';
+    fireEvent.change(screen.getByLabelText('ASM 功能需求'), { target: { value: secondRequirement } });
+    fireEvent.click(screen.getByRole('button', { name: '发送需求' }));
+    await advanceLocalGeneration();
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(window.localStorage.getItem('asm-agent-conversation-workspace:admin')).toContain(firstRequirement);
+
+    firstRender.unmount();
+    render(<App />);
+    await findWorkspaceShell();
+
+    const restoredConversationList = screen.getByLabelText('历史对话');
+    expect(within(restoredConversationList).getByText(firstRequirement)).toBeInTheDocument();
+    expect(within(restoredConversationList).getByText(secondRequirement)).toBeInTheDocument();
+
+    const firstConversation = Array.from(restoredConversationList.querySelectorAll<HTMLElement>('.conversation-item')).find((item) =>
+      item.textContent?.includes(firstRequirement)
+    );
+    expect(firstConversation).toBeDefined();
+    fireEvent.click(firstConversation as HTMLElement);
+
+    expect(document.querySelector('.assistant-panel')?.textContent).toContain(firstRequirement);
     expect(document.querySelector('.output-panel')?.textContent).toContain('main.asm');
   });
 
@@ -551,6 +615,99 @@ describe('assistant flow', () => {
     expect(buttonsAfterSelect[1]).toHaveTextContent('当前会话');
   });
 
+  it('does not duplicate or drop conversations when rapidly clicking history items', async () => {
+    await renderAuthenticatedApp();
+
+    const submitRequirement = (value: string) => {
+      fireEvent.change(screen.getByLabelText('ASM 功能需求'), { target: { value } });
+      fireEvent.click(screen.getByRole('button', { name: '发送需求' }));
+    };
+    const readConversationButtons = () =>
+      Array.from(screen.getByLabelText('历史对话').querySelectorAll<HTMLElement>('.conversation-item'));
+    const readConversationTitles = () =>
+      readConversationButtons().map((item) => item.querySelector('.conversation-title')?.textContent ?? '');
+
+    submitRequirement('会话1');
+    fireEvent.click(screen.getByRole('button', { name: '新建对话' }));
+    submitRequirement('会话2');
+    fireEvent.click(screen.getByRole('button', { name: '新建对话' }));
+    submitRequirement('会话3');
+
+    expect(readConversationTitles()).toEqual(['会话3', '会话2', '会话1']);
+
+    const conversationOne = readConversationButtons().find((item) => item.textContent?.includes('会话1'));
+    const conversationTwo = readConversationButtons().find((item) => item.textContent?.includes('会话2'));
+    expect(conversationOne).toBeDefined();
+    expect(conversationTwo).toBeDefined();
+
+    act(() => {
+      conversationOne?.click();
+      conversationTwo?.click();
+      conversationOne?.click();
+    });
+
+    const titlesAfterRapidClicks = readConversationTitles();
+    expect(titlesAfterRapidClicks).toHaveLength(3);
+    expect(new Set(titlesAfterRapidClicks)).toEqual(new Set(['会话1', '会话2', '会话3']));
+    expect(readConversationButtons().filter((item) => item.textContent?.includes('当前会话'))).toHaveLength(1);
+  });
+
+  it('keeps an in-progress conversation running after switching away and back', async () => {
+    vi.useFakeTimers();
+    await renderAuthenticatedApp();
+
+    const firstRequirement = '基于 HK64S8x 配置 Timer0，FOSC 16MHz、8 分频，实现 1ms 周期溢出中断。';
+    fireEvent.change(screen.getByLabelText('ASM 功能需求'), { target: { value: firstRequirement } });
+    fireEvent.click(screen.getByRole('button', { name: '发送需求' }));
+
+    await advanceTimers(3200);
+    expect(screen.getByRole('button', { name: '停止生成' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '新建对话' }));
+    expect(screen.queryByRole('button', { name: '停止生成' })).not.toBeInTheDocument();
+
+    const runningConversation = Array.from(screen.getByLabelText('历史对话').querySelectorAll<HTMLElement>('.conversation-item')).find(
+      (item) => item.textContent?.includes('Timer0')
+    );
+    expect(runningConversation).toBeDefined();
+    expect(within(runningConversation as HTMLElement).getByLabelText('任务执行中')).toBeInTheDocument();
+
+    fireEvent.click(runningConversation as HTMLElement);
+
+    expect(screen.getByRole('button', { name: '停止生成' })).toBeInTheDocument();
+    expect(document.querySelector('.agent-trace')?.textContent ?? '').not.toContain('已停止');
+
+    await advanceLocalGeneration();
+    expect(screen.queryByRole('button', { name: '停止生成' })).not.toBeInTheDocument();
+  });
+
+  it('attaches a background completion to its original conversation instead of the current conversation', async () => {
+    vi.useFakeTimers();
+    await renderAuthenticatedApp();
+
+    const firstRequirement = '基于 HK64S8x 使能看门狗 WDT，并在主循环中按规范周期执行清狗指令。';
+    fireEvent.change(screen.getByLabelText('ASM 功能需求'), { target: { value: firstRequirement } });
+    fireEvent.click(screen.getByRole('button', { name: '发送需求' }));
+
+    await advanceTimers(3200);
+    fireEvent.click(screen.getByRole('button', { name: '新建对话' }));
+
+    await advanceLocalGeneration();
+
+    expect(document.querySelector('.assistant-panel')?.textContent ?? '').not.toContain('已按内置 HK64S8x 规范生成单文件 ASM');
+    expect(document.querySelector('.output-panel')?.textContent ?? '').toContain('暂无生成文件');
+
+    const completedConversation = Array.from(screen.getByLabelText('历史对话').querySelectorAll<HTMLElement>('.conversation-item')).find(
+      (item) => item.textContent?.includes('看门狗 WDT')
+    );
+    expect(completedConversation).toBeDefined();
+
+    fireEvent.click(completedConversation as HTMLElement);
+
+    expect(screen.getByText(/已按内置 HK64S8x 规范生成单文件 ASM/)).toBeInTheDocument();
+    expect(document.querySelector('.output-panel')?.textContent ?? '').toContain('main.asm');
+  });
+
   it('does not render the view-all conversations action in the recent conversation list', async () => {
     await renderAuthenticatedApp();
 
@@ -565,8 +722,8 @@ describe('assistant flow', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '知识库' }));
 
-    expect(screen.getByRole('region', { name: 'HK8S8100X ASM 知识库' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 1, name: 'HK8S8100X ASM 知识库' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'HK64S8x ASM 知识库' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'HK64S8x ASM 知识库' })).toBeInTheDocument();
     expect(screen.getByText('指令速查')).toBeInTheDocument();
     expect(screen.getByText('寄存器地图')).toBeInTheDocument();
     expect(screen.getByText('Timer0 定时')).toBeInTheDocument();
@@ -825,7 +982,7 @@ describe('assistant flow', () => {
     expect(within(dialog).getByRole('button', { name: '关于' })).toHaveClass('active');
     expect(within(dialog).getByText('航顺 ASM Agent')).toBeInTheDocument();
     expect(within(dialog).getByText('当前版本')).toBeInTheDocument();
-    expect(within(dialog).getByText('v0.1.0-web')).toBeInTheDocument();
+    expect(within(dialog).getByText('v0.1.0')).toBeInTheDocument();
     expect(within(dialog).getByRole('link', { name: '进入官网' })).toHaveAttribute('href', 'https://www.hsxp-hk.com/');
 
     fireEvent.click(within(dialog).getByRole('button', { name: '关闭设置' }));
@@ -1197,8 +1354,65 @@ describe('assistant flow', () => {
     expect(screen.queryByText('API 已配置')).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '选择模型' }));
-    fireEvent.click(screen.getByRole('option', { name: '自定义 OpenAI 兼容模型' }));
+    fireEvent.click(screen.getByRole('option', { name: 'custom-chat' }));
     expect(screen.getByText('API 已配置')).toBeInTheDocument();
+  });
+
+  it('shows saved custom model records as concrete composer model options', async () => {
+    window.localStorage.setItem(
+      'asm-agent-model-config',
+      JSON.stringify({
+        selectedProvider: 'custom',
+        selectedCustomModelId: 'custom-backup',
+        customModels: [
+          {
+            id: 'custom-primary',
+            name: '公司中转 GPT',
+            apiKey: 'sk-primary-key',
+            baseUrl: 'https://primary.example.com/v1',
+            modelId: 'primary-chat'
+          },
+          {
+            id: 'custom-backup',
+            name: '备用 Qwen',
+            apiKey: 'sk-backup-key',
+            baseUrl: 'https://backup.example.com/v1',
+            modelId: 'backup-chat'
+          }
+        ]
+      })
+    );
+
+    await renderAuthenticatedApp();
+
+    const modelSelector = screen.getByRole('button', { name: '选择模型' });
+    expect(modelSelector).toHaveTextContent('备用 Qwen');
+
+    fireEvent.click(modelSelector);
+    const modelMenu = screen.getByRole('listbox', { name: '选择模型' });
+    expect(within(modelMenu).getByRole('option', { name: '公司中转 GPT' })).toBeInTheDocument();
+    expect(within(modelMenu).getByRole('option', { name: '备用 Qwen' })).toHaveAttribute('aria-selected', 'true');
+    expect(within(modelMenu).queryByRole('option', { name: '自定义 OpenAI 兼容模型' })).not.toBeInTheDocument();
+
+    fireEvent.click(within(modelMenu).getByRole('option', { name: '公司中转 GPT' }));
+    expect(modelSelector).toHaveTextContent('公司中转 GPT');
+
+    fireEvent.change(screen.getByLabelText('ASM 功能需求'), {
+      target: { value: '今天是什么天气' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: '发送需求' }));
+
+    expect(await screen.findByText('来自第三方模型的动态回答', undefined, externalModelWait)).toBeInTheDocument();
+    expect(window.asmAgent?.completeChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: 'custom',
+        apiKey: 'sk-primary-key',
+        baseUrl: 'https://primary.example.com/v1',
+        modelId: 'primary-chat'
+      }),
+      expect.any(AbortSignal)
+    );
+    expect(JSON.parse(window.localStorage.getItem('asm-agent-model-config') ?? '{}').selectedCustomModelId).toBe('custom-primary');
   });
 
   it('answers ordinary identity questions without starting ASM project planning', async () => {
@@ -1209,7 +1423,7 @@ describe('assistant flow', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: '发送需求' }));
 
-    expect(await screen.findByText(/我是 HK8S8100X ASM 工程智能体/)).toBeInTheDocument();
+    expect(await screen.findByText(/我是 HK64S8x ASM 工程智能体/)).toBeInTheDocument();
     expect(screen.getByText(/也可以回答普通使用问题/)).toBeInTheDocument();
     expect(screen.queryByText(/工作日志/)).not.toBeInTheDocument();
     expect(screen.queryByText(/请补充目标功能/)).not.toBeInTheDocument();
@@ -1273,7 +1487,7 @@ describe('assistant flow', () => {
     await renderAuthenticatedApp();
 
     fireEvent.change(screen.getByLabelText('ASM 功能需求'), {
-      target: { value: '生成 HK8S8100X GPIO ASM 工程' }
+      target: { value: '生成 HK64S8x GPIO ASM 工程' }
     });
     fireEvent.click(screen.getByRole('button', { name: '发送需求' }));
 
@@ -1284,7 +1498,7 @@ describe('assistant flow', () => {
     await advanceTimers(3200);
     const runningAction = document.querySelector('.trace-action.running');
     expect(runningAction).toBeInTheDocument();
-    expect(runningAction?.textContent).toContain('生成候选 ASM 草稿');
+    expect(runningAction?.textContent).toContain('生成成品 ASM');
 
     fireEvent.click(stopButton);
     expect(screen.getByRole('button', { name: '发送需求' })).toBeDisabled();
@@ -1424,7 +1638,7 @@ describe('assistant flow', () => {
     expect(document.querySelector('.output-panel')?.textContent).toContain('main.asm');
     expect(screen.queryByRole('button', { name: '停止生成' })).not.toBeInTheDocument();
     expect(window.asmAgent.createPlan).toHaveBeenCalledWith({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: expect.stringContaining('MOV P1_DIR,A')
     });
   });
@@ -1472,6 +1686,17 @@ describe('assistant flow', () => {
     expect(screen.getByText(/MOV PA_OE,A/)).toBeInTheDocument();
     expect(screen.getByText(/MOV PA_PIO,A/)).toBeInTheDocument();
     expect(document.querySelector('.typing-dots')).not.toBeInTheDocument();
+    const commandGroup = document.querySelector<HTMLDetailsElement>('.trace-tool-group');
+    const commandToggle = document.querySelector<HTMLElement>('.trace-tg-head');
+    const commandBody = document.querySelector<HTMLElement>('.trace-tg-body');
+    expect(commandGroup).not.toBeNull();
+    expect(commandToggle).not.toBeNull();
+    expect(commandBody).not.toBeNull();
+    expect(commandGroup?.open).toBe(false);
+    fireEvent.click(commandToggle as HTMLElement);
+    expect(commandGroup?.open).toBe(true);
+    fireEvent.click(commandToggle as HTMLElement);
+    expect(commandGroup?.open).toBe(false);
     await act(async () => {
       await Promise.resolve();
       await Promise.resolve();
@@ -1506,11 +1731,11 @@ describe('assistant flow', () => {
     expect(window.asmAgent?.createPlan).not.toHaveBeenCalled();
   });
 
-  it('runs the local toolchain automatically after an external ASM draft', async () => {
+  it('validates and publishes spec-constrained model ASM without local rewrite', async () => {
     vi.useFakeTimers();
     if (!window.asmAgent?.completeChat) throw new Error('Expected completeChat test stub');
     vi.mocked(window.asmAgent.completeChat).mockResolvedValueOnce(
-      ['## 候选 ASM 草稿', '', '```asm', 'MOV P1_DIR,A', 'MOV LED_DATA,A', '```'].join('\n')
+      ['## 成品 ASM', '', '```asm', 'model_entry:', '  CLRWDT', '  JMP model_entry', '```'].join('\n')
     );
     window.localStorage.setItem(
       'asm-agent-model-config',
@@ -1530,8 +1755,10 @@ describe('assistant flow', () => {
     fireEvent.click(screen.getByRole('button', { name: '发送需求' }));
 
     await advanceTimers(5000);
-    expect(screen.getByRole('heading', { level: 2, name: '候选 ASM 草稿' })).toBeInTheDocument();
-    expect(screen.getByText(/MOV P1_DIR,A/)).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 2, name: '成品 ASM' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/model_entry/)).not.toBeInTheDocument();
+    expect(document.body.textContent).toContain('带完整 HK64S8x JSON 规范约束');
+    expect(document.body.textContent).toContain('质检模型返回 ASM');
 
     expect(document.querySelector('.workflow-bar')).not.toBeInTheDocument();
     expect(document.querySelector('.output-panel')).toBeInTheDocument();
@@ -1539,21 +1766,285 @@ describe('assistant flow', () => {
 
     const codeBlocks = Array.from(document.querySelectorAll('pre.markdown-code-block'));
     const finalCode = codeBlocks.at(-1)?.textContent ?? '';
-    expect(finalCode).toContain('MOV PA_OE,A');
-    expect(finalCode).toContain('MOV PA_PIO,A');
-    expect(finalCode).not.toContain('P1_DIR');
-    expect(finalCode).not.toContain('LED_DATA');
+    expect(finalCode).toContain('model_entry:');
+    expect(finalCode).toContain('JMP model_entry');
+    expect(finalCode).not.toContain('MOV PA_OE,A');
     expect(document.querySelector('.output-panel .output-file')).toBeInTheDocument();
     expect(document.querySelector('.output-panel')?.textContent).toContain('main.asm');
-    expect(document.body.textContent).toContain('assemble-context --model gpt-4o');
-    expect(document.body.textContent).toContain('运行 HK8S8100X 规范校验');
+    expect(document.body.textContent).toContain('extract-asm --model gpt-4o');
+    expect(document.body.textContent).toContain('运行 HK64S8x 规范校验');
     expect(document.body.textContent).toContain('编辑了 main.asm');
     expect(screen.queryByRole('button', { name: '停止生成' })).not.toBeInTheDocument();
     expect(window.asmAgent?.completeChat).toHaveBeenCalledTimes(1);
-    expect(window.asmAgent?.createPlan).toHaveBeenCalledWith({
-      chipId: 'HK8S8100X',
-      requirement: '生成一个精确 1ms 的 Timer0 中断工程。'
+    expect(window.asmAgent?.completeChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        systemPrompt: expect.stringContaining('SPEC_DRIVEN_ASM_CONTEXT')
+      }),
+      expect.any(AbortSignal)
+    );
+    expect(window.asmAgent?.completeChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        systemPrompt: expect.stringContaining('"asmSyntax":"JMP K"')
+      }),
+      expect.any(AbortSignal)
+    );
+    expect(window.asmAgent?.completeChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        systemPrompt: expect.stringContaining('"name":"SCK_PS"')
+      }),
+      expect.any(AbortSignal)
+    );
+    expect(window.asmAgent?.createPlan).not.toHaveBeenCalled();
+    expect(window.asmAgent?.saveAsmFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        file: {
+          path: 'main.asm',
+          content: ['model_entry:', '  CLRWDT', '  JMP model_entry', ''].join('\n')
+        }
+      })
+    );
+  });
+
+  it('rejects invalid spec-constrained model ASM instead of locally rewriting it', async () => {
+    vi.useFakeTimers();
+    if (!window.asmAgent?.completeChat) throw new Error('Expected completeChat test stub');
+    vi.mocked(window.asmAgent.completeChat)
+      .mockResolvedValueOnce(
+        ['## 成品 ASM', '', '```asm', 'model_entry:', '  MOV P1_DIR,A', '  JMP model_entry', '```'].join('\n')
+      )
+      .mockResolvedValueOnce(
+        ['## 成品 ASM', '', '```asm', 'model_entry:', '  MOV P1_DIR,A', '  JMP model_entry', '```'].join('\n')
+      );
+    window.localStorage.setItem(
+      'asm-agent-model-config',
+      JSON.stringify({
+        provider: 'gpt',
+        apiKey: 'sk-test-key',
+        baseUrl: 'https://api.openai.com/v1',
+        modelId: 'gpt-4o'
+      })
+    );
+
+    await renderAuthenticatedApp();
+
+    fireEvent.change(screen.getByLabelText('ASM 功能需求'), {
+      target: { value: '生成一个 GPIO ASM 工程。' }
     });
+    fireEvent.click(screen.getByRole('button', { name: '发送需求' }));
+
+    await advanceTimers(31000);
+
+    expect(document.body.textContent).toContain('ASM 质量闸失败：第 2 行 UNKNOWN_REGISTER：未知寄存器 P1_DIR');
+    expect(document.querySelector('.output-panel')?.textContent).toContain('暂无生成文件');
+    expect(window.asmAgent?.completeChat).toHaveBeenCalledTimes(2);
+    expect(window.asmAgent?.createPlan).not.toHaveBeenCalled();
+    expect(window.asmAgent?.saveAsmFile).not.toHaveBeenCalled();
+    expect(screen.queryByText(/MOV PA_OE,A/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '停止生成' })).not.toBeInTheDocument();
+  });
+
+  it('repairs invalid model ASM once with quality diagnostics before saving', async () => {
+    vi.useFakeTimers();
+    if (!window.asmAgent?.completeChat) throw new Error('Expected completeChat test stub');
+    vi.mocked(window.asmAgent.completeChat)
+      .mockResolvedValueOnce(
+        [
+          '## 成品 ASM',
+          '',
+          '```asm',
+          'INIT:',
+          '  MOV A,#00H',
+          '  MOV 34H,A',
+          '  MOV A,#07H',
+          '  MOV 35H,A',
+          '  CLR 38H',
+          '  CLR 82H',
+          'MAIN_LOOP:',
+          '  CLR 38H',
+          '  MOV A,82H',
+          '  MOV 80H,A',
+          '  MOV A,#01H',
+          '  OR A,80H',
+          '  MOV 38H,A',
+          '  CALL DELAY',
+          '  INCR 82H',
+          '  MOV A,82H',
+          '  SE #04H',
+          '  JMP MAIN_LOOP',
+          '  JMP INIT',
+          'DELAY:',
+          '  MOV A,#FFH',
+          '  MOV 81H,A',
+          'DELAY_INNER:',
+          '  DECSZ 81H',
+          '  JMP DELAY_INNER',
+          '  RET',
+          '```'
+        ].join('\n')
+      )
+      .mockResolvedValueOnce(
+        [
+          '## 修复后 ASM',
+          '',
+          '```asm',
+          'INIT:',
+          '  MOV A,#00H',
+          '  MOV 34H,A',
+          '  MOV A,#07H',
+          '  MOV 35H,A',
+          'MAIN_LOOP:',
+          '  MOV A,#01H',
+          '  MOV 38H,A',
+          '  CALL DELAY_200MS',
+          '  MOV A,#02H',
+          '  MOV 38H,A',
+          '  CALL DELAY_200MS',
+          '  MOV A,#04H',
+          '  MOV 38H,A',
+          '  CALL DELAY_200MS',
+          '  MOV A,#00H',
+          '  MOV 38H,A',
+          '  CALL DELAY_200MS',
+          '  JMP MAIN_LOOP',
+          'DELAY_200MS:',
+          '  MOV A,#08H',
+          '  MOV 82H,A',
+          'DELAY_L3:',
+          '  MOV A,#FFH',
+          '  MOV 80H,A',
+          'DELAY_L2:',
+          '  MOV A,#FFH',
+          '  MOV 81H,A',
+          'DELAY_L1:',
+          '  DECSZR 81H',
+          '  JMP DELAY_L1',
+          '  DECSZR 80H',
+          '  JMP DELAY_L2',
+          '  DECSZR 82H',
+          '  JMP DELAY_L3',
+          '  RET',
+          '```'
+        ].join('\n')
+      );
+    window.localStorage.setItem(
+      'asm-agent-model-config',
+      JSON.stringify({
+        provider: 'gpt',
+        apiKey: 'sk-test-key',
+        baseUrl: 'https://api.openai.com/v1',
+        modelId: 'gpt-4o'
+      })
+    );
+
+    await renderAuthenticatedApp();
+
+    fireEvent.change(screen.getByLabelText('ASM 功能需求'), {
+      target: { value: '让 PA0 PA1 PA2 彩灯间隔闪烁 20ms。' }
+    });
+    fireEvent.click(screen.getByRole('button', { name: '发送需求' }));
+
+    await advanceTimers(36000);
+
+    expect(document.body.textContent).toContain('带诊断重新生成 ASM');
+    expect(document.body.textContent).toContain('修复后 ASM 通过');
+    expect(window.asmAgent.completeChat).toHaveBeenCalledTimes(2);
+    expect(window.asmAgent.completeChat).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        prompt: expect.stringContaining('ASM 需求行为质检失败')
+      }),
+      expect.any(AbortSignal)
+    );
+    expect(window.asmAgent.completeChat).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        prompt: expect.stringContaining('明确灯态')
+      }),
+      expect.any(AbortSignal)
+    );
+    expect(window.asmAgent.completeChat).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        prompt: expect.stringContaining('PA0 常亮')
+      }),
+      expect.any(AbortSignal)
+    );
+    expect(window.asmAgent.completeChat).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        prompt: expect.stringContaining('DECSZ 不会把减 1 结果写回 RAM')
+      }),
+      expect.any(AbortSignal)
+    );
+    expect(window.asmAgent.completeChat).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        prompt: expect.stringContaining('不要使用 ORG、END、EQU、DB、DS')
+      }),
+      expect.any(AbortSignal)
+    );
+    expect(window.asmAgent.completeChat).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        prompt: expect.stringContaining('R 只是操作数占位符')
+      }),
+      expect.any(AbortSignal)
+    );
+    expect(window.asmAgent.completeChat).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        prompt: expect.stringContaining('例如 80H')
+      }),
+      expect.any(AbortSignal)
+    );
+    expect(window.asmAgent?.createPlan).not.toHaveBeenCalled();
+    expect(window.asmAgent?.saveAsmFile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        file: {
+          path: 'main.asm',
+          content: [
+            'INIT:',
+            '  MOV A,#00H',
+            '  MOV 34H,A',
+            '  MOV A,#07H',
+            '  MOV 35H,A',
+            'MAIN_LOOP:',
+            '  MOV A,#01H',
+            '  MOV 38H,A',
+            '  CALL DELAY_200MS',
+            '  MOV A,#02H',
+            '  MOV 38H,A',
+            '  CALL DELAY_200MS',
+            '  MOV A,#04H',
+            '  MOV 38H,A',
+            '  CALL DELAY_200MS',
+            '  MOV A,#00H',
+            '  MOV 38H,A',
+            '  CALL DELAY_200MS',
+            '  JMP MAIN_LOOP',
+            'DELAY_200MS:',
+            '  MOV A,#08H',
+            '  MOV 82H,A',
+            'DELAY_L3:',
+            '  MOV A,#FFH',
+            '  MOV 80H,A',
+            'DELAY_L2:',
+            '  MOV A,#FFH',
+            '  MOV 81H,A',
+            'DELAY_L1:',
+            '  DECSZR 81H',
+            '  JMP DELAY_L1',
+            '  DECSZR 80H',
+            '  JMP DELAY_L2',
+            '  DECSZR 82H',
+            '  JMP DELAY_L3',
+            '  RET',
+            ''
+          ].join('\n')
+        }
+      })
+    );
+    expect(document.body.textContent).not.toContain('ASM 质量闸失败');
   });
 
   it('answers ASM concept questions as help instead of generating a project', async () => {
@@ -1612,7 +2103,7 @@ describe('assistant flow', () => {
     expect(screen.queryByText(/分析 3\/3/)).not.toBeInTheDocument();
 
     await advanceTimers(5200);
-    expect(document.body.textContent).toContain('运行 HK8S8100X 规范校验');
+    expect(document.body.textContent).toContain('运行 HK64S8x 规范校验');
     expect(document.body.textContent).toContain('基础约束通过');
     expect(document.body.textContent).toContain('需要补充');
 
@@ -1654,7 +2145,7 @@ describe('assistant flow', () => {
     await advanceTimers(18000);
     expect(screen.getByText(/MOV PA_OE,A/)).toBeInTheDocument();
     expect(window.asmAgent?.createPlan).toHaveBeenCalled();
-    expect(document.body.textContent).toContain('运行 HK8S8100X 规范校验');
+    expect(document.body.textContent).toContain('运行 HK64S8x 规范校验');
     expect(document.body.textContent).toContain('编辑了 main.asm');
     expect(screen.getAllByText(/main\.asm/).length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: '停止生成' })).not.toBeInTheDocument();
@@ -1718,7 +2209,7 @@ describe('assistant flow', () => {
     await renderAuthenticatedApp();
 
     expect(screen.queryByText('桥接 API 不可用')).not.toBeInTheDocument();
-    expect(screen.getByText('v0.1.0-web')).toBeInTheDocument();
+    expect(document.body.textContent).toContain('v0.0.2');
 
     fireEvent.change(screen.getByLabelText('ASM 功能需求'), {
       target: { value: '生成一个精确 1ms 的 Timer0 中断工程。' }
@@ -1772,6 +2263,7 @@ describe('assistant flow', () => {
 
       const stream = new ReadableStream<Uint8Array>({
         start(controller) {
+          controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"reasoning_content":"先分析需求。"}}]}\n\n'));
           controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"streamed "}}]}\n\n'));
           controller.enqueue(new TextEncoder().encode('data: {"choices":[{"delta":{"content":"answer"}}]}\n\n'));
           controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
@@ -1796,6 +2288,9 @@ describe('assistant flow', () => {
     fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter', code: 'Enter' });
 
     expect(await screen.findByText('streamed answer', undefined, externalModelWait)).toBeInTheDocument();
+    expect(await screen.findByText('模型思考', undefined, externalModelWait)).toBeInTheDocument();
+    expect(screen.getByText('先分析需求。')).toBeInTheDocument();
+    expect(screen.queryByText('先分析需求。streamed answer')).not.toBeInTheDocument();
     expect(fetchMock).toHaveBeenCalledWith(
       '/api/complete-chat-stream',
       expect.objectContaining({
@@ -1804,18 +2299,18 @@ describe('assistant flow', () => {
     );
   });
 
-  it('keeps the external draft visible while auto-validating without showing a plan summary', async () => {
+  it('keeps direct model validation readable by hiding the raw model response and finalizing once', async () => {
     vi.useFakeTimers();
     if (!window.asmAgent) throw new Error('Expected asmAgent test stub');
     if (!window.asmAgent.completeChat) throw new Error('Expected completeChat test stub');
     vi.mocked(window.asmAgent.completeChat).mockResolvedValueOnce(
-      ['External streamed analysis', '', '```asm', 'MOV P1_DIR,A', '```'].join('\n')
+      ['External streamed analysis', '', '```asm', 'direct_entry:', '  CLRWDT', '  JMP direct_entry', '```'].join('\n')
     );
     vi.mocked(window.asmAgent.createPlan).mockResolvedValueOnce({
       status: 'ready',
       plan: {
         summary: 'Planned GPIO ASM project',
-        chipId: 'HK8S8100X',
+        chipId: 'HK64S8x',
         features: ['GPIO'],
         files: ['src/main.asm'],
         usesInterrupt: false,
@@ -1844,20 +2339,27 @@ describe('assistant flow', () => {
     await renderAuthenticatedApp();
 
     const requirement = screen.getByRole('textbox');
-    fireEvent.change(requirement, { target: { value: 'Generate HK8S8100X GPIO ASM project.' } });
+    fireEvent.change(requirement, { target: { value: 'Generate HK64S8x GPIO ASM project.' } });
     fireEvent.keyDown(requirement, { key: 'Enter', code: 'Enter' });
 
     await advanceTimers(5000);
-    expect(screen.getByText(/External streamed analysis/)).toBeInTheDocument();
+    expect(screen.queryByText(/External streamed analysis/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/MOV P1_DIR,A/)).not.toBeInTheDocument();
+    expect(document.querySelectorAll('.trace-bubble')).toHaveLength(1);
     expect(screen.queryByText('Planned GPIO ASM project')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('计划摘要')).not.toBeInTheDocument();
 
     await advanceTimers(26000);
-    expect(screen.getByText(/MOV PA_OE,A/)).toBeInTheDocument();
+    expect(screen.getByText(/direct_entry:/)).toBeInTheDocument();
+    expect(screen.getByText(/JMP direct_entry/)).toBeInTheDocument();
+    expect(screen.queryByText(/MOV PA_OE,A/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/External streamed analysis/)).not.toBeInTheDocument();
     expect(screen.queryByText('Planned GPIO ASM project')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('计划摘要')).not.toBeInTheDocument();
     expect(screen.getAllByText(/main\.asm/).length).toBeGreaterThan(0);
     expect(window.asmAgent.completeChat).toHaveBeenCalledTimes(1);
+    expect(window.asmAgent.createPlan).not.toHaveBeenCalled();
+    expect(document.querySelectorAll('.trace-bubble')).toHaveLength(1);
     expect(screen.queryByRole('button', { name: '停止生成' })).not.toBeInTheDocument();
     await act(async () => {
       await Promise.resolve();

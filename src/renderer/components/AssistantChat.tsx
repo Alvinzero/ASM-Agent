@@ -1,13 +1,15 @@
-import { useEffect, useRef, useState, type Dispatch, type KeyboardEvent, type SetStateAction } from 'react';
+import { useEffect, useMemo, useRef, useState, type Dispatch, type KeyboardEvent, type SetStateAction } from 'react';
 
 import { MarkdownMessage } from './MarkdownMessage';
 import { AgentTrace } from './AgentTrace';
 import type { AgentModelRuntime, AgentSessionState } from '../state/useAgentSession';
 import {
+  getCustomModelDisplayName,
   getModelLabel,
   getSelectedModelConfig,
   isCompleteModelConfig,
   MODEL_OPTIONS,
+  type CustomModelConfig,
   type ModelConfigState,
   type ModelProvider
 } from '../state/modelConfig';
@@ -20,36 +22,84 @@ interface AssistantChatProps {
 const COMPOSER_MODEL_MENU_ID = 'composer-model-menu';
 const AUTO_SCROLL_BOTTOM_THRESHOLD = 48;
 
+interface ComposerModelOption {
+  key: string;
+  label: string;
+  provider: ModelProvider;
+  customModelId?: string;
+}
+
 function isNearMessageListBottom(list: HTMLDivElement): boolean {
   return list.scrollHeight - list.clientHeight - list.scrollTop <= AUTO_SCROLL_BOTTOM_THRESHOLD;
+}
+
+function providerConfigFromCustomModel(model: CustomModelConfig) {
+  return {
+    apiKey: model.apiKey,
+    baseUrl: model.baseUrl,
+    modelId: model.modelId
+  };
+}
+
+function buildComposerModelOptions(state: ModelConfigState): ComposerModelOption[] {
+  const builtInOptions = MODEL_OPTIONS.filter((option) => option.value !== 'custom').map((option) => ({
+    key: option.value,
+    label: option.label,
+    provider: option.value
+  }));
+
+  if (state.customModels.length === 0) {
+    return [
+      ...builtInOptions,
+      {
+        key: 'custom',
+        label: getModelLabel('custom'),
+        provider: 'custom'
+      }
+    ];
+  }
+
+  return [
+    ...builtInOptions,
+    ...state.customModels.map((model, index) => ({
+      key: `custom:${model.id}`,
+      label: getCustomModelDisplayName(model, index),
+      provider: 'custom' as const,
+      customModelId: model.id
+    }))
+  ];
 }
 
 const EXAMPLE_PROMPTS: Array<{ title: string; detail: string; prompt: string; icon: string; accent: string }> = [
   {
     title: 'Timer0 精确定时中断',
-    detail: '配置 Timer0 实现 1ms 周期溢出中断，FOSC 16MHz、8 分频。',
-    prompt: '基于 HK8S8100X 配置 Timer0，FOSC 16MHz、8 分频，实现 1ms 周期溢出中断，并在中断里翻转 PA0。',
+    detail: '输出可质检的 Timer0/PA0 中断骨架，时序参数先保留注释。',
+    prompt:
+      '基于 HK64S8x 输出一个可通过内置 parseAsm + validateAsm 的最小单文件 ASM，请直接返回一个 asm 代码块，不要输出解释文本。只使用规范确认的指令和寄存器，不要编造未确认寄存器、位字段、向量或伪指令。场景：Timer0，FOSC 16MHz、8 分频、1ms 周期溢出中断，并在中断里翻转 PA0；这些硬件时序和翻转动作先写成 ; 注释。代码结构包含 reset_entry、main_entry、main_loop、timer0_init、interrupt_entry；主循环使用 CLRWDT + JMP main_loop，interrupt_entry 使用 CLRWDT + RETI。',
     icon: 'icons/07_external_interrupt_icon.jpg',
     accent: 'blue'
   },
   {
     title: 'GPIO 输出控制',
-    detail: '把 PA0 设为推挽输出，上电后输出高电平点亮 LED。',
-    prompt: '基于 HK8S8100X 将 PA0 配置为推挽输出，上电后输出高电平驱动 LED 常亮。',
+    detail: '仅用 PA_OE/PA_PIO 演示 PA0 输出高电平。',
+    prompt:
+      '基于 HK64S8x 输出一个可通过内置 parseAsm + validateAsm 的最小单文件 ASM，请直接返回一个 asm 代码块，不要输出解释文本。只使用规范确认的指令和寄存器，不要编造未确认寄存器、位字段、向量或伪指令。场景：PA0 推挽输出并输出高电平驱动 LED；GPIO 初始化只允许使用 PA_OE 和 PA_PIO 示例写法：MOV A,#0xFF / MOV PA_OE,A / MOV A,#0x01 / MOV PA_PIO,A。代码结构包含 reset_entry、main_entry、main_loop、gpio_init；主循环使用 CLRWDT + JMP main_loop。',
     icon: 'icons/08_watchdog_flow_icon.jpg',
     accent: 'green'
   },
   {
     title: '外部中断响应',
-    detail: 'PA1 下降沿触发外部中断，进入中断后清标志位。',
-    prompt: '基于 HK8S8100X 配置 PA1 为外部中断输入，下降沿触发，进入中断服务程序后清除中断标志位。',
+    detail: '输出可质检的 PA1 外部中断骨架，边沿和清标志先注释。',
+    prompt:
+      '基于 HK64S8x 输出一个可通过内置 parseAsm + validateAsm 的最小外部中断 ASM 骨架，请直接返回一个 asm 代码块，不要输出解释文本。只使用规范确认的指令和寄存器，不要编造未确认寄存器、位字段、向量或伪指令。场景：PA1 外部中断输入，下降沿触发，进入中断服务程序后清除中断标志位；下降沿触发和清标志位的具体寄存器/位字段如果 SPEC_DRIVEN_ASM_CONTEXT 未确认，只写成 ; 注释。代码结构包含 reset_entry、main_entry、main_loop、interrupt_entry；interrupt_entry 使用 CLRWDT + RETI。',
     icon: 'icons/06_gpio_output_icon.jpg',
     accent: 'violet'
   },
   {
     title: '看门狗清狗流程',
-    detail: '使能 WDT，在主循环中按规范周期喂狗防止复位。',
-    prompt: '基于 HK8S8100X 使能看门狗 WDT，并在主循环中按规范周期执行清狗指令防止系统复位。',
+    detail: '用 CLRWDT 构建最小清狗循环，使能和周期参数先注释。',
+    prompt:
+      '基于 HK64S8x 输出一个可通过内置 parseAsm + validateAsm 的最小 WDT 清狗 ASM，请直接返回一个 asm 代码块，不要输出解释文本。只使用规范确认的指令和寄存器，不要编造未确认寄存器、位字段、向量或伪指令。场景：使能看门狗 WDT，并在主循环中按规范周期执行清狗指令防止系统复位；WDT 使能和周期配置如果 SPEC_DRIVEN_ASM_CONTEXT 未确认，只写成 ; 注释。代码结构包含 reset_entry、main_entry、main_loop、wdt_service；main_loop 和 wdt_service 使用 CLRWDT。',
     icon: 'icons/05_timer_icon.jpg',
     accent: 'red'
   }
@@ -65,8 +115,13 @@ export function AssistantChat({ session, modelConfigState, onModelConfigStateCha
   const modelPickerRef = useRef<HTMLDivElement | null>(null);
   const modelConfig = getSelectedModelConfig(modelConfigState);
   const isApiConfigured = isCompleteModelConfig(modelConfig);
+  const composerModelOptions = useMemo(() => buildComposerModelOptions(modelConfigState), [modelConfigState]);
+  const selectedComposerModelKey =
+    modelConfig.provider === 'custom' && modelConfig.customModelId ? `custom:${modelConfig.customModelId}` : modelConfig.provider;
+  const selectedComposerModelOption = composerModelOptions.find((option) => option.key === selectedComposerModelKey);
   const modelPickerDisplay =
-    modelConfig.provider === 'custom' && modelConfig.name?.trim() ? modelConfig.name.trim() : getModelLabel(modelConfig.provider);
+    selectedComposerModelOption?.label ??
+    (modelConfig.provider === 'custom' && modelConfig.name?.trim() ? modelConfig.name.trim() : getModelLabel(modelConfig.provider));
 
   useEffect(() => {
     const list = messageListRef.current;
@@ -131,22 +186,48 @@ export function AssistantChat({ session, modelConfigState, onModelConfigStateCha
     session.setRequirement(prompt);
   };
 
-  const focusComposerModelOption = (provider: ModelProvider) => {
+  const focusComposerModelOption = (optionKey: string) => {
     window.setTimeout(() => {
-      modelPickerRef.current?.querySelector<HTMLButtonElement>(`[data-model-provider="${provider}"]`)?.focus();
+      const optionButtons = Array.from(
+        modelPickerRef.current?.querySelectorAll<HTMLButtonElement>('[data-model-option-key]') ?? []
+      );
+      optionButtons.find((button) => button.dataset.modelOptionKey === optionKey)?.focus();
     }, 0);
   };
 
   const openComposerModelMenu = () => {
     setIsModelMenuOpen(true);
-    focusComposerModelOption(modelConfig.provider);
+    focusComposerModelOption(selectedComposerModelKey);
   };
 
-  const selectComposerModel = (provider: ModelProvider) => {
-    onModelConfigStateChange((current) => ({
-      ...current,
-      selectedProvider: provider
-    }));
+  const selectComposerModel = (option: ComposerModelOption) => {
+    onModelConfigStateChange((current) => {
+      if (option.provider !== 'custom') {
+        return {
+          ...current,
+          selectedProvider: option.provider
+        };
+      }
+
+      const selectedModel = current.customModels.find((model) => model.id === option.customModelId) ?? current.customModels[0];
+      if (!selectedModel) {
+        return {
+          ...current,
+          selectedProvider: 'custom',
+          selectedCustomModelId: null
+        };
+      }
+
+      return {
+        ...current,
+        selectedProvider: 'custom',
+        selectedCustomModelId: selectedModel.id,
+        configs: {
+          ...current.configs,
+          custom: providerConfigFromCustomModel(selectedModel)
+        }
+      };
+    });
     setIsModelMenuOpen(false);
   };
 
@@ -162,22 +243,23 @@ export function AssistantChat({ session, modelConfigState, onModelConfigStateCha
     }
   };
 
-  const moveComposerModelFocus = (provider: ModelProvider, direction: 1 | -1) => {
-    const currentIndex = MODEL_OPTIONS.findIndex((option) => option.value === provider);
-    const nextIndex = (currentIndex + direction + MODEL_OPTIONS.length) % MODEL_OPTIONS.length;
-    focusComposerModelOption(MODEL_OPTIONS[nextIndex].value);
+  const moveComposerModelFocus = (optionKey: string, direction: 1 | -1) => {
+    const currentIndex = composerModelOptions.findIndex((option) => option.key === optionKey);
+    const normalizedCurrentIndex = currentIndex >= 0 ? currentIndex : 0;
+    const nextIndex = (normalizedCurrentIndex + direction + composerModelOptions.length) % composerModelOptions.length;
+    focusComposerModelOption(composerModelOptions[nextIndex].key);
   };
 
-  const handleComposerModelOptionKeyDown = (event: KeyboardEvent<HTMLButtonElement>, provider: ModelProvider) => {
+  const handleComposerModelOptionKeyDown = (event: KeyboardEvent<HTMLButtonElement>, option: ComposerModelOption) => {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      moveComposerModelFocus(provider, 1);
+      moveComposerModelFocus(option.key, 1);
       return;
     }
 
     if (event.key === 'ArrowUp') {
       event.preventDefault();
-      moveComposerModelFocus(provider, -1);
+      moveComposerModelFocus(option.key, -1);
       return;
     }
 
@@ -199,7 +281,7 @@ export function AssistantChat({ session, modelConfigState, onModelConfigStateCha
         <div className="chat-topbar-actions">
           <div className="topbar-utility-actions">
             <span className="topbar-version">
-              {session.apiVersion ? (session.apiVersion.startsWith('v') ? session.apiVersion : `v${session.apiVersion}`) : 'v0.1.0-web'}
+              {session.apiVersion ? (session.apiVersion.startsWith('v') ? session.apiVersion : `v${session.apiVersion}`) : 'v0.0.2'}
             </span>
           </div>
         </div>
@@ -214,10 +296,10 @@ export function AssistantChat({ session, modelConfigState, onModelConfigStateCha
                 <h1 className="hero-title">
                   自然语言到
                   <br />
-                  <span className="hero-title-accent">HK8S8100X</span> ASM 工程
+                  <span className="hero-title-accent">HK64S8x</span> ASM 工程
                 </h1>
                 <p className="hero-subtitle">
-                  基于航顺芯片 HK8S8100X 处理器架构，将自然语言需求智能转化为规范、可编译、可部署的 ASM 工程。
+                  基于航顺芯片 HK64S8x 处理器架构，将自然语言需求智能转化为规范、可编译、可部署的 ASM 工程。
                 </p>
               </div>
               <div className="hero-art" aria-hidden="true">
@@ -250,8 +332,7 @@ export function AssistantChat({ session, modelConfigState, onModelConfigStateCha
           session.messages.map((message) => {
             if (message.kind === 'trace') {
               return (
-                <article className="message-bubble assistant trace-bubble" key={message.id}>
-                  <span>智能体</span>
+                <article className="trace-bubble" aria-label="智能体执行过程" key={message.id}>
                   <AgentTrace nodes={message.nodes ?? []} />
                 </article>
               );
@@ -322,18 +403,20 @@ export function AssistantChat({ session, modelConfigState, onModelConfigStateCha
               </button>
               {isModelMenuOpen ? (
                 <div className="model-picker-menu" id={COMPOSER_MODEL_MENU_ID} role="listbox" aria-label="选择模型">
-                  {MODEL_OPTIONS.map((option) => {
-                    const isSelected = option.value === modelConfig.provider;
+                  {composerModelOptions.map((option) => {
+                    const isSelected = option.key === selectedComposerModelKey;
                     return (
                       <button
                         className={`model-picker-option${isSelected ? ' selected' : ''}`}
-                        data-model-provider={option.value}
+                        data-custom-model-id={option.customModelId}
+                        data-model-option-key={option.key}
+                        data-model-provider={option.provider}
                         type="button"
                         role="option"
                         aria-selected={isSelected}
-                        key={option.value}
-                        onClick={() => selectComposerModel(option.value)}
-                        onKeyDown={(event) => handleComposerModelOptionKeyDown(event, option.value)}
+                        key={option.key}
+                        onClick={() => selectComposerModel(option)}
+                        onKeyDown={(event) => handleComposerModelOptionKeyDown(event, option)}
                       >
                         <span className="model-option-label">{option.label}</span>
                         {isSelected ? <span className="model-option-check" aria-hidden="true" /> : null}

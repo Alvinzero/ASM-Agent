@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { BuiltInSpecRepository } from '../../src/shared/spec/BuiltInSpecRepository';
 
 describe('BuiltInSpecRepository', () => {
-  it('loads HK8S8100X as a built-in chip platform', () => {
+  it('loads HK64S8x as a built-in chip platform', () => {
     const repo = new BuiltInSpecRepository();
-    const spec = repo.getByChipId('HK8S8100X');
+    const spec = repo.getByChipId('HK64S8x');
 
-    expect(spec.chipId).toBe('HK8S8100X');
+    expect(spec.chipId).toBe('HK64S8x');
     expect(spec.version).toBe('0.1');
-    expect(spec.documentSource).toBe('HK8S8100X_\u89c4\u683c\u4e66 V0.1.docx');
+    expect(spec.documentSource).toBe('HK64S8x_\u89c4\u683c\u4e66 V0.1.docx');
     expect(spec.instructions).toHaveLength(65);
     expect(spec.registers).toHaveLength(96);
     expect(spec.instructions).toEqual(
@@ -54,11 +54,11 @@ describe('BuiltInSpecRepository', () => {
   it('returns isolated built-in specs for each lookup', () => {
     const repo = new BuiltInSpecRepository();
 
-    const firstRead = repo.getByChipId('HK8S8100X');
+    const firstRead = repo.getByChipId('HK64S8x');
     firstRead.instructions[0].mnemonic = 'BROKEN';
     firstRead.registers[0].bits[0].name = 'BROKEN_BIT';
 
-    const secondRead = repo.getByChipId('HK8S8100X');
+    const secondRead = repo.getByChipId('HK64S8x');
 
     expect(secondRead.instructions.map((instruction) => instruction.mnemonic)).toEqual(
       expect.arrayContaining(['NOP', 'JMP', 'CLRWDT'])

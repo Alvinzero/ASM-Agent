@@ -123,6 +123,10 @@ export function getSelectedCustomModel(state: ModelConfigState): CustomModelConf
   return state.customModels.find((model) => model.id === state.selectedCustomModelId) ?? state.customModels[0];
 }
 
+export function getCustomModelDisplayName(model: CustomModelConfig, index: number): string {
+  return model.name.trim() || model.modelId.trim() || `自定义模型 ${index + 1}`;
+}
+
 export function getSelectedModelConfig(state: ModelConfigState): ModelApiConfig {
   if (state.selectedProvider === 'custom') {
     const customModel = getSelectedCustomModel(state);

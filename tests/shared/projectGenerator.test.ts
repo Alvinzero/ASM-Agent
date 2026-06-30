@@ -5,11 +5,11 @@ import { ProjectGenerator } from '../../src/shared/asm/ProjectGenerator';
 import type { GenerationPlan } from '../../src/shared/agent/GenerationPlanner';
 import { BuiltInSpecRepository } from '../../src/shared/spec/BuiltInSpecRepository';
 
-const spec = new BuiltInSpecRepository().getByChipId('HK8S8100X');
+const spec = new BuiltInSpecRepository().getByChipId('HK64S8x');
 
 const timerGpioInterruptPlan: GenerationPlan = {
-  summary: 'Generate a Timer0 interrupt GPIO ASM project for HK8S8100X.',
-  chipId: 'HK8S8100X',
+  summary: 'Generate a Timer0 interrupt GPIO ASM project for HK64S8x.',
+  chipId: 'HK64S8x',
   features: ['Timer0', 'GPIO', 'Interrupt', 'WDT'],
   files: [
     'startup/reset.asm',
@@ -59,7 +59,7 @@ describe('ProjectGenerator', () => {
         '.gitignore'
       ])
     );
-    expect(specCompliance?.content).toContain('HK8S8100X');
+    expect(specCompliance?.content).toContain('HK64S8x');
   });
 
   it('emits only safe relative paths and newline-terminated file contents', () => {

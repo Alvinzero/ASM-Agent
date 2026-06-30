@@ -6,11 +6,11 @@ import { validateAsm } from '../../src/shared/asm/AsmValidator';
 import type { GenerationPlan } from '../../src/shared/agent/GenerationPlanner';
 import { BuiltInSpecRepository } from '../../src/shared/spec/BuiltInSpecRepository';
 
-const spec = new BuiltInSpecRepository().getByChipId('HK8S8100X');
+const spec = new BuiltInSpecRepository().getByChipId('HK64S8x');
 
 const gpioPlan: GenerationPlan = {
   summary: 'Generate a GPIO output ASM file.',
-  chipId: 'HK8S8100X',
+  chipId: 'HK64S8x',
   features: ['GPIO'],
   files: ['main.asm'],
   usesInterrupt: false,
@@ -21,7 +21,7 @@ const gpioPlan: GenerationPlan = {
 describe('SingleAsmFileGenerator', () => {
   it('emits one validated main.asm file using only built-in instructions and registers', () => {
     const file = new SingleAsmFileGenerator().generate({
-      requirement: 'Generate HK8S8100X GPIO output on PA0.',
+      requirement: 'Generate HK64S8x GPIO output on PA0.',
       plan: gpioPlan,
       spec
     });
@@ -35,7 +35,7 @@ describe('SingleAsmFileGenerator', () => {
 
   it('uses the requested asm filename after sanitizing it to a flat asm file', () => {
     const file = new SingleAsmFileGenerator().generate({
-      requirement: 'Generate HK8S8100X GPIO output on PA0.',
+      requirement: 'Generate HK64S8x GPIO output on PA0.',
       plan: gpioPlan,
       spec,
       fileName: '../demo file.asm'

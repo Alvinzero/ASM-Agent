@@ -220,11 +220,20 @@ function matchK(
     };
   }
 
-  const parsed = parseNumber(actual);
+  const parsed = parseAsmAddressNumber(actual);
   const operandName = form.operands === 'k8' ? 'k8' : 'k10';
   const max = operandName === 'k8' ? 0xff : 0x3ff;
 
   if (parsed !== undefined) return requireRange(operandName, parsed, max, 0);
+
+  if (isNumericLiteralLike(actual)) {
+    return {
+      ok: false,
+      code: 'OPERAND_SHAPE_MISMATCH',
+      message: `Address operand must use H suffix: ${actual}`,
+      score: 0
+    };
+  }
 
   if (!context.labelPattern.test(actual)) {
     return {
@@ -261,8 +270,17 @@ function matchRegister(actual: string, context: ValidationContext): OperandMatch
     };
   }
 
-  const parsed = parseNumber(actual);
+  const parsed = parseAsmAddressNumber(actual);
   if (parsed !== undefined) return requireRange('r8', parsed, 0xff, 0);
+
+  if (isNumericLiteralLike(actual)) {
+    return {
+      ok: false,
+      code: 'OPERAND_SHAPE_MISMATCH',
+      message: `Register address must use H suffix: ${actual}`,
+      score: 1
+    };
+  }
 
   if (!context.labelPattern.test(actual)) {
     return {
@@ -331,6 +349,18 @@ function parseNumber(value: string): number | undefined {
   if (/^[0-9a-f]+h$/i.test(trimmed)) return Number.parseInt(trimmed.slice(0, -1), 16);
 
   return undefined;
+}
+
+function parseAsmAddressNumber(value: string): number | undefined {
+  const trimmed = value.trim();
+
+  if (/^[0-9a-f]+h$/i.test(trimmed)) return Number.parseInt(trimmed.slice(0, -1), 16);
+
+  return undefined;
+}
+
+function isNumericLiteralLike(value: string): boolean {
+  return /^(?:0x[0-9a-f]+|[0-9]+)$/i.test(value.trim());
 }
 
 function chooseFailure(matches: MatchResult[]): { code: string; message: string } {

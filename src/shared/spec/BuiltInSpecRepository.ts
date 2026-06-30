@@ -1,7 +1,7 @@
 import type { ChipSpec } from './ChipSpec';
-import hk8s8100xSpec from './hk8s8100x.v0.1.json';
+import hk64s8xSpec from './hk64s8x.v0.1.json';
 
-const hk8s8100x = hk8s8100xSpec as ChipSpec;
+const hk64s8x = hk64s8xSpec as ChipSpec;
 
 function cloneChipSpec(spec: ChipSpec): ChipSpec {
   if (typeof structuredClone === 'function') {
@@ -13,7 +13,7 @@ function cloneChipSpec(spec: ChipSpec): ChipSpec {
 
 export class BuiltInSpecRepository {
   getByChipId(chipId: string): ChipSpec {
-    if (chipId === hk8s8100x.chipId) return cloneChipSpec(hk8s8100x);
+    if (chipId === hk64s8x.chipId) return cloneChipSpec(hk64s8x);
     throw new Error(`Unsupported chip platform: ${chipId}`);
   }
 }

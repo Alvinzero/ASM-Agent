@@ -1,6 +1,6 @@
 {
   "name": "asm-agent",
-  "version": "0.1.0",
+  "version": "0.0.2",
   "private": true,
   "description": "Local ASM project generation agent for company chip platforms.",
   "main": "dist-main/main/main.js",
@@ -11,7 +11,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "spec:compile": "tsx scripts/compileSpec.ts",
+    "asm:validate": "tsx scripts/validateAsm.ts",
     "package:win": "npm run build && electron-builder --win nsis",
+    "release:win": "npm run build && electron-builder --win nsis --publish always",
     "lint": "tsc --noEmit"
   },
   "devDependencies": {
@@ -39,5 +41,8 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "^4.62.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

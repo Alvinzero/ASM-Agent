@@ -16,3 +16,7 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: ASM Agent
+publish:
+  provider: github
+  owner: ${env.GH_RELEASE_OWNER}
+  repo: ${env.GH_RELEASE_REPO}

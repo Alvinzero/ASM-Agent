@@ -75,11 +75,12 @@ describe('browser fallback model proxy', () => {
         }
       });
     });
-    const onChunk = vi.fn();
+    const onEvent = vi.fn();
 
-    await expect(streamChatViaLocalProxy(request, onChunk, fetchMock)).resolves.toBe('你好');
-    expect(onChunk).toHaveBeenNthCalledWith(1, '你');
-    expect(onChunk).toHaveBeenNthCalledWith(2, '好');
+    await expect(streamChatViaLocalProxy(request, onEvent, fetchMock)).resolves.toBe('你好');
+    expect(onEvent).toHaveBeenNthCalledWith(1, { kind: 'assistant_text_delta', text: '你' });
+    expect(onEvent).toHaveBeenNthCalledWith(2, { kind: 'assistant_text_delta', text: '好' });
+    expect(onEvent).toHaveBeenNthCalledWith(3, { kind: 'completed', stopReason: 'stop' });
     expect(fetchMock).toHaveBeenCalledWith('/api/complete-chat-stream', {
       method: 'POST',
       headers: {
@@ -87,6 +88,42 @@ describe('browser fallback model proxy', () => {
       },
       body: JSON.stringify(request)
     });
+  });
+
+  it('surfaces reasoning deltas separately from assistant text deltas', async () => {
+    const request = buildChatRequest();
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(
+          new TextEncoder().encode(
+            [
+              'data: {"choices":[{"delta":{"reasoning_content":"先分析需求。"}}]}',
+              '',
+              'data: {"choices":[{"delta":{"content":"最终回答"}}]}',
+              '',
+              'data: [DONE]',
+              '',
+              ''
+            ].join('\n')
+          )
+        );
+        controller.close();
+      }
+    });
+    const fetchMock = vi.fn(async () => {
+      return new Response(stream, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/event-stream'
+        }
+      });
+    });
+    const onEvent = vi.fn();
+
+    await expect(streamChatViaLocalProxy(request, onEvent, fetchMock)).resolves.toBe('最终回答');
+    expect(onEvent).toHaveBeenNthCalledWith(1, { kind: 'assistant_reasoning_delta', text: '先分析需求。' });
+    expect(onEvent).toHaveBeenNthCalledWith(2, { kind: 'assistant_text_delta', text: '最终回答' });
+    expect(onEvent).toHaveBeenNthCalledWith(3, { kind: 'completed', stopReason: 'stop' });
   });
 
   it('keeps conversation memory messages in stream proxy requests', async () => {

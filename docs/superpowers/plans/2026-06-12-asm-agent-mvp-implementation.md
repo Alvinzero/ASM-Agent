@@ -59,7 +59,7 @@ Create the application under the repository root `C:/Users/Admin/Documents/ASM A
         ChipSpec.ts
         BuiltInSpecRepository.ts
         SpecCompiler.ts
-        hk8s8100x.v0.1.json
+        hk64s8x.v0.1.json
       project/
         ProjectTypes.ts
         ProjectExporter.ts
@@ -388,11 +388,11 @@ import { describe, expect, it } from 'vitest';
 import { BuiltInSpecRepository } from '../../src/shared/spec/BuiltInSpecRepository';
 
 describe('BuiltInSpecRepository', () => {
-  it('loads HK8S8100X as a built-in chip platform', () => {
+  it('loads HK64S8x as a built-in chip platform', () => {
     const repo = new BuiltInSpecRepository();
-    const spec = repo.getByChipId('HK8S8100X');
+    const spec = repo.getByChipId('HK64S8x');
 
-    expect(spec.chipId).toBe('HK8S8100X');
+    expect(spec.chipId).toBe('HK64S8x');
     expect(spec.version).toBe('0.1');
     expect(spec.instructions.length).toBeGreaterThan(0);
     expect(spec.registers.length).toBeGreaterThan(0);
@@ -493,13 +493,13 @@ export interface ChipSpec {
 ```ts
 import type { ChipSpec } from './ChipSpec';
 
-const hk8s8100x: ChipSpec = {
-  chipId: 'HK8S8100X',
-  displayName: 'HK8S8100X',
+const hk64s8x: ChipSpec = {
+  chipId: 'HK64S8x',
+  displayName: 'HK64S8x',
   version: '0.1',
   instructionSource: 'instruction_set.xlsx',
   registerSource: 'register_set.xlsx',
-  documentSource: 'HK8S8100X_规格书 V0.1.docx',
+  documentSource: 'HK64S8x_规格书 V0.1.docx',
   instructions: [
     {
       mnemonic: 'NOP',
@@ -571,7 +571,7 @@ const hk8s8100x: ChipSpec = {
 
 export class BuiltInSpecRepository {
   getByChipId(chipId: string): ChipSpec {
-    if (chipId === hk8s8100x.chipId) return hk8s8100x;
+    if (chipId === hk64s8x.chipId) return hk64s8x;
     throw new Error(`Unsupported chip platform: ${chipId}`);
   }
 }
@@ -605,7 +605,7 @@ If `git` is unavailable, record the changed files in the task handoff and contin
 **Files:**
 - Create: `src/shared/spec/SpecCompiler.ts`
 - Create: `scripts/compileSpec.ts`
-- Create: `src/shared/spec/hk8s8100x.v0.1.json`
+- Create: `src/shared/spec/hk64s8x.v0.1.json`
 - Create: `tests/shared/specCompiler.test.ts`
 - Modify: `src/shared/spec/BuiltInSpecRepository.ts`
 
@@ -788,7 +788,7 @@ export function compileSpec(input: CompileSpecInput): ChipSpec {
     version: input.version,
     instructionSource: 'instruction_set.xlsx',
     registerSource: 'register_set.xlsx',
-    documentSource: 'HK8S8100X_规格书 V0.1.docx',
+    documentSource: 'HK64S8x_规格书 V0.1.docx',
     instructions: input.instructionRows.filter((row) => text(row.mnemonic)).map(normalizeInstructionRow),
     registers: input.registerRows.map(({ row, notes }) => normalizeRegisterRow(row, notes)),
     memory: [
@@ -843,11 +843,11 @@ function registerRowsWithNotes(rows: Record<string, string>[]) {
 
 const instructionFile = process.argv[2] ?? 'C:/Users/Admin/Desktop/instruction_set.xlsx';
 const registerFile = process.argv[3] ?? 'D:/Wechat/Wechat_Data/xwechat_files/wxid_kwkg1bellqa921_c788/msg/file/2026-06/register_set.xlsx';
-const outputFile = path.resolve('src/shared/spec/hk8s8100x.v0.1.json');
+const outputFile = path.resolve('src/shared/spec/hk64s8x.v0.1.json');
 
 const spec = compileSpec({
-  chipId: 'HK8S8100X',
-  displayName: 'HK8S8100X',
+  chipId: 'HK64S8x',
+  displayName: 'HK64S8x',
   version: '0.1',
   instructionRows: readSheetRows(instructionFile),
   registerRows: registerRowsWithNotes(readSheetRows(registerFile))
@@ -873,19 +873,19 @@ Expected:
 - Tests pass.
 - Script prints `Instructions: 65`.
 - Script prints `Registers: 96`.
-- `src/shared/spec/hk8s8100x.v0.1.json` is created.
+- `src/shared/spec/hk64s8x.v0.1.json` is created.
 
 - [ ] **Step 6: Load generated JSON from repository**
 
 Modify `src/shared/spec/BuiltInSpecRepository.ts`:
 
 ```ts
-import hk8s8100x from './hk8s8100x.v0.1.json';
+import hk64s8x from './hk64s8x.v0.1.json';
 import type { ChipSpec } from './ChipSpec';
 
 export class BuiltInSpecRepository {
   getByChipId(chipId: string): ChipSpec {
-    if (chipId === 'HK8S8100X') return hk8s8100x as ChipSpec;
+    if (chipId === 'HK64S8x') return hk64s8x as ChipSpec;
     throw new Error(`Unsupported chip platform: ${chipId}`);
   }
 }
@@ -907,7 +907,7 @@ Run:
 
 ```powershell
 git add src/shared/spec scripts/compileSpec.ts tests/shared/specCompiler.test.ts tests/shared/specRepository.test.ts
-git commit -m "feat: compile built-in HK8S8100X specification"
+git commit -m "feat: compile built-in HK64S8x specification"
 ```
 
 If `git` is unavailable, record the changed files in the task handoff and continue.
@@ -1097,7 +1097,7 @@ import { validateAsm } from '../../src/shared/asm/AsmValidator';
 import { BuiltInSpecRepository } from '../../src/shared/spec/BuiltInSpecRepository';
 
 describe('AsmValidator', () => {
-  const spec = new BuiltInSpecRepository().getByChipId('HK8S8100X');
+  const spec = new BuiltInSpecRepository().getByChipId('HK64S8x');
 
   it('accepts instructions from the built-in instruction set', () => {
     const diagnostics = validateAsm(parseAsm('CLRWDT\nJMP 0x008'), spec);
@@ -1330,7 +1330,7 @@ describe('AgentService', () => {
 
   it('creates a generation plan for Timer0 interrupt toggling PA0', () => {
     const result = service.createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: '生成一个 Timer0 周期中断翻转 PA0 的完整 ASM 工程，需要启动入口、主循环、中断处理和注释。'
     });
 
@@ -1343,7 +1343,7 @@ describe('AgentService', () => {
 
   it('asks a follow-up when timing details are required but missing', () => {
     const result = service.createPlan({
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       requirement: '生成一个精确 1ms Timer0 中断工程。'
     });
 
@@ -1543,10 +1543,10 @@ import { BuiltInSpecRepository } from '../../src/shared/spec/BuiltInSpecReposito
 
 describe('ProjectGenerator', () => {
   it('generates a complete ASM project tree from a plan', () => {
-    const spec = new BuiltInSpecRepository().getByChipId('HK8S8100X');
+    const spec = new BuiltInSpecRepository().getByChipId('HK64S8x');
     const plan: GenerationPlan = {
       summary: '生成 Timer0 + GPIO ASM 工程',
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       features: ['Timer0', 'GPIO', 'Interrupt'],
       files: ['startup/reset.asm', 'startup/interrupt.asm', 'src/main.asm'],
       usesInterrupt: true,
@@ -1564,7 +1564,7 @@ describe('ProjectGenerator', () => {
     expect(project.files.map((file) => file.path)).toContain('startup/reset.asm');
     expect(project.files.map((file) => file.path)).toContain('src/main.asm');
     expect(project.files.map((file) => file.path)).toContain('README.md');
-    expect(project.files.find((file) => file.path === 'docs/spec-compliance.md')?.content).toContain('HK8S8100X');
+    expect(project.files.find((file) => file.path === 'docs/spec-compliance.md')?.content).toContain('HK64S8x');
   });
 });
 ```
@@ -1891,7 +1891,7 @@ vi.stubGlobal('asmAgent', {
     status: 'ready',
     plan: {
       summary: '生成 Timer0 + GPIO ASM 工程',
-      chipId: 'HK8S8100X',
+      chipId: 'HK64S8x',
       features: ['Timer0', 'GPIO'],
       files: ['startup/reset.asm', 'src/main.asm'],
       usesInterrupt: true,
@@ -1916,7 +1916,7 @@ describe('Assistant UI flow', () => {
     await userEvent.click(screen.getByRole('button', { name: '生成计划' }));
 
     expect(await screen.findByText('生成 Timer0 + GPIO ASM 工程')).toBeInTheDocument();
-    expect(screen.getByText('HK8S8100X')).toBeInTheDocument();
+    expect(screen.getByText('HK64S8x')).toBeInTheDocument();
   });
 });
 ```
@@ -2032,10 +2032,10 @@ export function useAgentSession() {
   const [requirement, setRequirement] = useState('');
   const [plan, setPlan] = useState<Plan | undefined>();
   const [project, setProject] = useState<GeneratedProject | undefined>();
-  const [message, setMessage] = useState('已加载公司内置 HK8S8100X ASM 规范库。');
+  const [message, setMessage] = useState('已加载公司内置 HK64S8x ASM 规范库。');
 
   async function createPlan() {
-    const result = await window.asmAgent.createPlan({ chipId: 'HK8S8100X', requirement });
+    const result = await window.asmAgent.createPlan({ chipId: 'HK64S8x', requirement });
     if (result.status === 'ready') {
       setPlan(result.plan);
       setMessage('已生成计划，请确认后生成 ASM 工程。');
@@ -2091,7 +2091,7 @@ export function App() {
   return (
     <main className="app-shell">
       <aside style={{ padding: 16, borderRight: '1px solid var(--line)' }}>
-        <h2>HK8S8100X</h2>
+        <h2>HK64S8x</h2>
         <p style={{ color: 'var(--text-secondary)' }}>内置 ASM 规范库 v0.1</p>
         <div className="panel" style={{ padding: 12 }}>
           <strong>内置约束</strong>
@@ -2179,7 +2179,7 @@ npm run dev:electron
 Expected:
 
 - A Windows desktop window opens.
-- Left side shows `HK8S8100X` and built-in spec status.
+- Left side shows `HK64S8x` and built-in spec status.
 - Center shows natural-language input and agent plan.
 - Right side shows generated project preview.
 - There is no ordinary-user `导入规范` button in the main flow.
@@ -2338,7 +2338,7 @@ If `git` is unavailable, record the changed files in the task handoff and contin
 
 This verification proves the ASM Agent MVP can:
 
-- Load the built-in HK8S8100X spec.
+- Load the built-in HK64S8x spec.
 - Accept a natural-language ASM project request.
 - Produce a generation plan.
 - Generate a complete ASM project tree.
@@ -2370,7 +2370,7 @@ ASM Agent is a Windows-first local desktop application that generates company-ch
 
 ## MVP
 
-- Built-in HK8S8100X specification library
+- Built-in HK64S8x specification library
 - Natural-language planning
 - ASM project generation
 - Static instruction/register validation

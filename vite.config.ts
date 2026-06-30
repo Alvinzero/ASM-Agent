@@ -305,13 +305,18 @@ async function readErrorPreview(response: Response): Promise<string> {
 
 function writeNonStreamingFallback(res: ServerResponse, label: string, body: string): void {
   try {
-    const content = readFirstAssistantMessage(JSON.parse(body) as unknown);
-    if (!content) {
+    const payload = JSON.parse(body) as unknown;
+    const reasoning = readFirstAssistantReasoning(payload);
+    const content = readFirstAssistantMessage(payload);
+    if (!content && !reasoning) {
       writeSseEvent(res, 'error', `${label} API 返回为空或格式不兼容。`);
       writeSseDone(res);
       return;
     }
 
+    if (reasoning) {
+      writeSseEvent(res, 'message', { choices: [{ delta: { reasoning_content: reasoning } }] });
+    }
     writeSseEvent(res, 'message', { choices: [{ delta: { content } }] });
     writeSseDone(res);
   } catch {
@@ -329,6 +334,25 @@ function readFirstAssistantMessage(payload: unknown): string {
   const message = firstChoice.message;
   if (!isRecord(message)) return '';
   return typeof message.content === 'string' ? message.content.trim() : '';
+}
+
+function readFirstAssistantReasoning(payload: unknown): string {
+  if (!isRecord(payload)) return '';
+  const choices = payload.choices;
+  if (!Array.isArray(choices)) return '';
+  const [firstChoice] = choices;
+  if (!isRecord(firstChoice)) return '';
+  const message = firstChoice.message;
+  if (!isRecord(message)) return '';
+  return readReasoningText(message).trim();
+}
+
+function readReasoningText(payload: Record<string, unknown>): string {
+  const candidates = [payload.reasoning_content, payload.reasoning, payload.thinking];
+  for (const value of candidates) {
+    if (typeof value === 'string') return value;
+  }
+  return '';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -7,7 +7,7 @@ interface ProjectOutputPanelProps {
 }
 
 const PROJECT_INFO: Array<{ label: string; value: string }> = [
-  { label: '目标芯片', value: 'HK8S8100X' },
+  { label: '目标芯片', value: 'HK64S8x' },
   { label: '架构', value: '8-bit RISC' },
   { label: '汇编器', value: 'ASMC v2.5' },
   { label: '优化等级', value: '优化级别 -O2' }
