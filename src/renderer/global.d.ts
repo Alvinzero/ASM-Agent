@@ -42,6 +42,7 @@ export interface AsmAgentApi {
   logoutUser?(): Promise<AuthOkResult>;
   getUpdateState?(): Promise<UpdateSnapshot>;
   checkForUpdates?(): Promise<UpdateSnapshot>;
+  downloadUpdate?(): Promise<UpdateSnapshot>;
   onUpdateStateChange?(listener: (snapshot: UpdateSnapshot) => void): () => void;
   quitAndInstallUpdate?(): Promise<{ ok: true }>;
 }

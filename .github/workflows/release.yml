@@ -59,21 +59,20 @@ jobs:
       - name: Upload Windows release assets
         shell: pwsh
         run: |
-          $releaseVersion = $env:RELEASE_TAG.TrimStart('v')
-          $artifacts = @(
-            "release/ASM-Agent-Setup-$releaseVersion.exe",
-            "release/ASM-Agent-Setup-$releaseVersion.exe.blockmap",
-            "release/latest.yml"
-          )
-
           Get-ChildItem release
 
-          foreach ($artifact in $artifacts) {
-            if (-not (Test-Path $artifact)) {
-              Write-Error "Missing release artifact: $artifact"
-              exit 1
-            }
+          $installer = Get-ChildItem release -Filter *.exe | Where-Object { $_.Name -notlike '*.blockmap' } | Select-Object -First 1
+          $blockmap = Get-ChildItem release -Filter *.exe.blockmap | Select-Object -First 1
+          $latest = Get-Item release/latest.yml -ErrorAction SilentlyContinue
 
-            Write-Host "Uploading $artifact"
-            gh release upload "$env:RELEASE_TAG" $artifact --clobber --repo "$env:GH_RELEASE_OWNER/$env:GH_RELEASE_REPO"
+          $artifacts = @($installer, $blockmap, $latest) | Where-Object { $null -ne $_ }
+
+          if ($artifacts.Count -ne 3) {
+            Write-Error "Missing release artifacts. Expected installer exe, blockmap, and latest.yml."
+            exit 1
+          }
+
+          foreach ($artifact in $artifacts) {
+            Write-Host "Uploading $($artifact.FullName)"
+            gh release upload "$env:RELEASE_TAG" "$($artifact.FullName)" --clobber --repo "$env:GH_RELEASE_OWNER/$env:GH_RELEASE_REPO"
           }

@@ -5,7 +5,7 @@ import { AssistantChat } from './components/AssistantChat';
 import { AuthPage } from './components/AuthPage';
 import { ProjectOutputPanel } from './components/ProjectOutputPanel';
 import { WorkspaceSidebar, type ArchivedConversation, type PrimaryNavId } from './components/WorkspaceSidebar';
-import { checkForUpdates, getUpdateState, onUpdateStateChange, quitAndInstallUpdate } from './state/AppUpdaterClient';
+import { checkForUpdates, downloadUpdate, getUpdateState, onUpdateStateChange, quitAndInstallUpdate } from './state/AppUpdaterClient';
 import { useAgentSession, type AgentSessionSnapshot, type AgentSessionState } from './state/useAgentSession';
 import { readSavedModelConfigState, saveModelConfigState } from './state/modelConfig';
 import { getCurrentUserProfile, loginUser, logoutUser, registerUser } from './state/UserAuthClient';
@@ -703,6 +703,11 @@ function AgentWorkspace({ currentUser, onLogout }: { currentUser: AuthUserProfil
       setUpdateState(snapshot);
     });
   };
+  const handleDownloadUpdate = () => {
+    void downloadUpdate().then((snapshot) => {
+      setUpdateState(snapshot);
+    });
+  };
   const handleQuitAndInstallUpdate = () => {
     void quitAndInstallUpdate();
   };
@@ -727,6 +732,7 @@ function AgentWorkspace({ currentUser, onLogout }: { currentUser: AuthUserProfil
         currentUser={currentUser}
         onLogout={onLogout}
         onCheckForUpdates={handleCheckForUpdates}
+        onDownloadUpdate={handleDownloadUpdate}
         onQuitAndInstallUpdate={handleQuitAndInstallUpdate}
       />
       <div

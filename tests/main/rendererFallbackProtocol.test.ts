@@ -29,6 +29,12 @@ function createBaseDependencies() {
       status: 'checking',
       version: '0.0.5'
     })),
+    downloadUpdate: vi.fn<() => Promise<UpdateSnapshot>>(async () => ({
+      status: 'downloading',
+      version: '0.0.5',
+      availableVersion: '0.0.6',
+      progressPercent: 0
+    })),
     quitAndInstallUpdate: vi.fn()
   };
 }
@@ -124,6 +130,29 @@ describe('renderer fallback protocol', () => {
     await expect(response.json()).resolves.toMatchObject({
       status: 'checking',
       version: '0.0.5'
+    });
+  });
+
+  it('starts desktop fallback update downloads through the protocol handler', async () => {
+    const dependencies = createBaseDependencies();
+    const downloadUpdate = vi.fn<() => Promise<UpdateSnapshot>>(async () => ({
+      status: 'downloading',
+      version: '0.0.5',
+      availableVersion: '0.0.6',
+      progressPercent: 0
+    }));
+    dependencies.downloadUpdate = downloadUpdate;
+
+    const response = await createRendererFallbackResponse(
+      createProtocolRequest('asm-agent://local/api/updater/download', {}),
+      dependencies
+    );
+
+    expect(downloadUpdate).toHaveBeenCalledTimes(1);
+    await expect(response.json()).resolves.toMatchObject({
+      status: 'downloading',
+      version: '0.0.5',
+      availableVersion: '0.0.6'
     });
   });
 });

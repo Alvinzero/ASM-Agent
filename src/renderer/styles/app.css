@@ -1416,6 +1416,14 @@ button {
   font-size: 14px;
 }
 
+.about-update-copy strong.update-status-available {
+  color: #1f9d57;
+}
+
+.about-update-copy strong.update-status-error {
+  color: #d14343;
+}
+
 .about-update-copy small {
   color: var(--text-secondary);
   font-size: 12px;

@@ -6,6 +6,7 @@ import type { UpdateSnapshot } from '../../shared/updater/UpdateSnapshot';
 export interface AppUpdaterAdapter extends EventEmitter {
   autoDownload: boolean;
   checkForUpdates(): Promise<unknown>;
+  downloadUpdate(): Promise<unknown>;
   quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void;
 }
 
@@ -33,7 +34,7 @@ export class AppUpdater {
       version: this.currentVersion
     };
 
-    this.adapter.autoDownload = true;
+    this.adapter.autoDownload = false;
     this.bindEvents();
   }
 
@@ -62,6 +63,41 @@ export class AppUpdater {
       return this.setSnapshot({
         status: 'error',
         version: this.currentVersion,
+        message
+      });
+    }
+
+    return this.snapshot;
+  }
+
+  async downloadUpdate(): Promise<UpdateSnapshot> {
+    if (!this.isPackaged) {
+      return this.setSnapshot({
+        status: 'unsupported',
+        version: this.currentVersion,
+        message: '自动更新仅在安装版应用中可用，请使用 Windows 安装包进行验证。'
+      });
+    }
+
+    if (this.snapshot.status !== 'available') {
+      return this.snapshot;
+    }
+
+    this.setSnapshot({
+      status: 'downloading',
+      version: this.currentVersion,
+      availableVersion: this.snapshot.availableVersion,
+      progressPercent: 0
+    });
+
+    try {
+      await this.adapter.downloadUpdate();
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : '下载更新失败';
+      return this.setSnapshot({
+        status: 'error',
+        version: this.currentVersion,
+        availableVersion: this.snapshot.availableVersion,
         message
       });
     }

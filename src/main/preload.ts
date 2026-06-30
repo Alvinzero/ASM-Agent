@@ -53,6 +53,7 @@ type AsmAgentApi = {
   logoutUser(): Promise<AuthOkResult>;
   getUpdateState(): Promise<UpdateSnapshot>;
   checkForUpdates(): Promise<UpdateSnapshot>;
+  downloadUpdate(): Promise<UpdateSnapshot>;
   onUpdateStateChange(listener: UpdateStateChangeHandler): () => void;
   quitAndInstallUpdate(): Promise<{ ok: true }>;
 };
@@ -100,6 +101,7 @@ const api: AsmAgentApi = {
   logoutUser: () => ipcRenderer.invoke('auth:logout'),
   getUpdateState: () => ipcRenderer.invoke('updater:getState'),
   checkForUpdates: () => ipcRenderer.invoke('updater:checkForUpdates'),
+  downloadUpdate: () => ipcRenderer.invoke('updater:downloadUpdate'),
   onUpdateStateChange: (listener) => {
     const handleUpdateStateChange = (_event: Electron.IpcRendererEvent, snapshot: UpdateSnapshot) => {
       listener(snapshot);

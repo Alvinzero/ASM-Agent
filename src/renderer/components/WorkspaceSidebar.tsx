@@ -44,6 +44,7 @@ interface WorkspaceSidebarProps {
   currentUser: AuthUserProfile;
   onLogout: () => void;
   onCheckForUpdates: () => void;
+  onDownloadUpdate: () => void;
   onQuitAndInstallUpdate: () => void;
 }
 
@@ -297,6 +298,7 @@ export function WorkspaceSidebar({
   currentUser,
   onLogout,
   onCheckForUpdates,
+  onDownloadUpdate,
   onQuitAndInstallUpdate
 }: WorkspaceSidebarProps) {
   const [store, setStore] = useState<ConversationStore>(() => readConversationStore());
@@ -325,13 +327,18 @@ export function WorkspaceSidebar({
   const selectedConversation = conversations.find((conversation) => conversation.id === contextMenu?.conversationId) ?? null;
   const draftModelConfig = getDraftModelConfig(draftModelState);
   const resolvedVersion = appVersion ? (appVersion.startsWith('v') ? appVersion : `v${appVersion}`) : '未知版本';
+  const resolvedAvailableVersion = updateState.availableVersion
+    ? updateState.availableVersion.startsWith('v')
+      ? updateState.availableVersion.slice(1)
+      : updateState.availableVersion
+    : null;
   const updateStatusLabel =
     updateState.status === 'checking'
       ? '正在检查更新'
       : updateState.status === 'available'
-        ? updateState.availableVersion
-          ? `发现新版本 ${updateState.availableVersion}`
-          : '发现新版本'
+        ? resolvedAvailableVersion
+          ? `检测到新版本 V ${resolvedAvailableVersion}`
+          : '检测到新版本'
         : updateState.status === 'downloading'
           ? `正在下载 ${updateState.progressPercent ?? 0}%`
           : updateState.status === 'downloaded'
@@ -343,9 +350,28 @@ export function WorkspaceSidebar({
                 : updateState.status === 'unsupported'
                   ? '当前环境不支持自动更新'
                   : '尚未检查更新';
+  const updateStatusClassName =
+    updateState.status === 'available'
+      ? 'update-status-available'
+      : updateState.status === 'error'
+        ? 'update-status-error'
+        : '';
   const canCheckForUpdates = updateState.status !== 'checking' && updateState.status !== 'downloading';
   const canInstallUpdate = updateState.status === 'downloaded';
-  const updateActionLabel = canCheckForUpdates ? '检查更新' : '正在处理更新...';
+  const updateActionLabel =
+    updateState.status === 'available'
+      ? '立即更新'
+      : canCheckForUpdates
+        ? '检查更新'
+        : '正在处理更新...';
+  const handleUpdateAction = () => {
+    if (updateState.status === 'available') {
+      onDownloadUpdate();
+      return;
+    }
+
+    onCheckForUpdates();
+  };
 
   useEffect(() => {
     writeConversationStore(store);
@@ -811,14 +837,14 @@ export function WorkspaceSidebar({
                   <div className="about-update-row">
                     <div className="about-update-copy">
                       <span>更新状态</span>
-                      <strong>{updateStatusLabel}</strong>
+                      <strong className={updateStatusClassName || undefined}>{updateStatusLabel}</strong>
                       {updateState.message ? <small>{updateState.message}</small> : null}
                     </div>
                     <div className="about-update-actions">
                       <button
                         className="secondary-dialog-action"
                         type="button"
-                        onClick={onCheckForUpdates}
+                        onClick={handleUpdateAction}
                         disabled={!canCheckForUpdates}
                       >
                         {updateActionLabel}

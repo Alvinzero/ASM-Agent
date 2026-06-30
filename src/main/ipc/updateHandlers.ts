@@ -28,6 +28,7 @@ export function registerUpdateHandlers(): void {
 
   ipcMain.handle('updater:getState', () => updaterService.getSnapshot());
   ipcMain.handle('updater:checkForUpdates', () => updaterService.checkForUpdates());
+  ipcMain.handle('updater:downloadUpdate', () => updaterService.downloadUpdate());
   ipcMain.handle('updater:quitAndInstall', () => {
     updaterService.quitAndInstall();
     return { ok: true };
@@ -40,6 +41,10 @@ export function getCurrentUpdateState(): UpdateSnapshot {
 
 export async function checkForAppUpdates(): Promise<UpdateSnapshot> {
   return updaterService.checkForUpdates();
+}
+
+export async function downloadAppUpdate(): Promise<UpdateSnapshot> {
+  return updaterService.downloadUpdate();
 }
 
 export function quitAndInstallAppUpdate(): void {

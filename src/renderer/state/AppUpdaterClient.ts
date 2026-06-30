@@ -6,6 +6,7 @@ type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
 const UPDATE_STATE_ENDPOINT = '/api/updater/state';
 const UPDATE_CHECK_ENDPOINT = '/api/updater/check';
+const UPDATE_DOWNLOAD_ENDPOINT = '/api/updater/download';
 const UPDATE_QUIT_AND_INSTALL_ENDPOINT = '/api/updater/quit-and-install';
 const UPDATE_POLL_INTERVAL_MS = 1500;
 
@@ -106,6 +107,21 @@ export async function checkForUpdates(
 
   if (isDesktopFallbackLocation(locationLike)) {
     return postUpdateSnapshot(UPDATE_CHECK_ENDPOINT, locationLike, fetchImpl);
+  }
+
+  return buildUnsupportedSnapshot();
+}
+
+export async function downloadUpdate(
+  locationLike: Pick<Location, 'protocol'> | undefined = typeof window !== 'undefined' ? window.location : undefined,
+  fetchImpl: FetchLike = fetch
+): Promise<UpdateSnapshot> {
+  if (window.asmAgent?.downloadUpdate) {
+    return window.asmAgent.downloadUpdate();
+  }
+
+  if (isDesktopFallbackLocation(locationLike)) {
+    return postUpdateSnapshot(UPDATE_DOWNLOAD_ENDPOINT, locationLike, fetchImpl);
   }
 
   return buildUnsupportedSnapshot();

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type KeyboardEvent, type SetStateAction } from 'react';
+import packageJson from '../../../package.json';
 
 import { MarkdownMessage } from './MarkdownMessage';
 import { AgentTrace } from './AgentTrace';
@@ -281,7 +282,7 @@ export function AssistantChat({ session, modelConfigState, onModelConfigStateCha
         <div className="chat-topbar-actions">
           <div className="topbar-utility-actions">
             <span className="topbar-version">
-              {session.apiVersion ? (session.apiVersion.startsWith('v') ? session.apiVersion : `v${session.apiVersion}`) : 'v0.0.7'}
+              {session.apiVersion ? (session.apiVersion.startsWith('v') ? session.apiVersion : `v${session.apiVersion}`) : `v${packageJson.version}`}
             </span>
           </div>
         </div>

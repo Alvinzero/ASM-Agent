@@ -25,6 +25,7 @@ export interface RendererFallbackDependencies {
   documentsDir: string;
   getUpdateState: () => import('../../shared/updater/UpdateSnapshot').UpdateSnapshot;
   checkForUpdates: () => Promise<import('../../shared/updater/UpdateSnapshot').UpdateSnapshot>;
+  downloadUpdate: () => Promise<import('../../shared/updater/UpdateSnapshot').UpdateSnapshot>;
   quitAndInstallUpdate: () => void;
 }
 
@@ -176,6 +177,10 @@ export async function createRendererFallbackResponse(
 
     if (route === '/api/updater/check') {
       return jsonResponse(await dependencies.checkForUpdates());
+    }
+
+    if (route === '/api/updater/download') {
+      return jsonResponse(await dependencies.downloadUpdate());
     }
 
     if (route === '/api/updater/quit-and-install') {

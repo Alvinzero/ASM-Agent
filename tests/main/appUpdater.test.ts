@@ -7,6 +7,7 @@ import type { UpdateSnapshot } from '../../src/shared/updater/UpdateSnapshot';
 class FakeUpdater extends EventEmitter implements AppUpdaterAdapter {
   autoDownload = true;
   checkForUpdates = vi.fn(async () => undefined);
+  downloadUpdate = vi.fn(async () => undefined);
   quitAndInstall = vi.fn();
 }
 
@@ -82,5 +83,18 @@ describe('AppUpdater', () => {
 
     service.quitAndInstall();
     expect(adapter.quitAndInstall).toHaveBeenCalledTimes(1);
+  });
+
+  it('starts downloading after a new version is discovered', async () => {
+    const { adapter, service } = createService();
+
+    adapter.emit('update-available', { version: '0.0.8' });
+    const snapshot = await service.downloadUpdate();
+
+    expect(adapter.downloadUpdate).toHaveBeenCalledTimes(1);
+    expect(snapshot).toMatchObject({
+      status: 'downloading',
+      availableVersion: '0.0.8'
+    });
   });
 });

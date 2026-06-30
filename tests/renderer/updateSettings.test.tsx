@@ -20,8 +20,15 @@ describe('update settings', () => {
       registerUser: vi.fn(),
       logoutUser: vi.fn(),
       checkForUpdates: vi.fn().mockResolvedValue({
-        status: 'checking',
-        version: '0.0.1'
+        status: 'available',
+        version: '0.0.1',
+        availableVersion: '0.0.8'
+      }),
+      downloadUpdate: vi.fn().mockResolvedValue({
+        status: 'downloading',
+        version: '0.0.1',
+        availableVersion: '0.0.8',
+        progressPercent: 0
       }),
       getUpdateState: vi.fn().mockResolvedValue({
         status: 'idle',
@@ -38,7 +45,7 @@ describe('update settings', () => {
     });
   });
 
-  it('shows update actions in settings and triggers a manual check', async () => {
+  it('switches to an immediate update action after detecting a newer version', async () => {
     render(<App />);
     await screen.findByLabelText('ASM Agent 导航');
 
@@ -53,5 +60,14 @@ describe('update settings', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: '检查更新' }));
 
     await waitFor(() => expect(window.asmAgent?.checkForUpdates).toHaveBeenCalledTimes(1));
+    await screen.findByText('检测到新版本 V 0.0.8');
+
+    const status = within(dialog).getByText('检测到新版本 V 0.0.8');
+    expect(status).toHaveClass('update-status-available');
+
+    const updateButton = within(dialog).getByRole('button', { name: '立即更新' });
+    fireEvent.click(updateButton);
+
+    await waitFor(() => expect(window.asmAgent?.downloadUpdate).toHaveBeenCalledTimes(1));
   });
 });

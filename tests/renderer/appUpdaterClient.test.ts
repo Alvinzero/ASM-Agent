@@ -64,6 +64,32 @@ describe('app updater client', () => {
     });
   });
 
+  it('routes desktop fallback update downloads through the local protocol when running from file://', async () => {
+    const fetchMock = vi.fn(async () => {
+      return new Response(JSON.stringify({ status: 'downloading', version: '0.0.5', availableVersion: '0.0.6' }), {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { downloadUpdate } = await import('../../src/renderer/state/AppUpdaterClient');
+
+    await expect(downloadUpdate({ protocol: 'file:' } as Location, fetchMock)).resolves.toMatchObject({
+      status: 'downloading',
+      version: '0.0.5',
+      availableVersion: '0.0.6'
+    });
+    expect(fetchMock).toHaveBeenCalledWith('asm-agent://local/api/updater/download', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  });
+
   it('polls desktop fallback update state changes when the preload bridge is unavailable', async () => {
     vi.useFakeTimers();
     const fetchMock = vi
