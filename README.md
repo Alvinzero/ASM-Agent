@@ -48,12 +48,12 @@ npm run package:win
 
 1. 把仓库放到 GitHub。
 2. 每次发布前修改 `package.json` 里的 `version`。
-3. 推送形如 `v0.0.2` 的 tag：
+3. 推送形如 `v0.0.3` 的 tag：
 
 ```bash
-git tag v0.0.2
+git tag v0.0.3
 git push origin main
-git push origin v0.0.2
+git push origin v0.0.3
 ```
 
 4. GitHub Actions 会在 Windows runner 上执行 `.github/workflows/release.yml`，自动生成：

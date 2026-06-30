@@ -1,4 +1,5 @@
 import type { AuthLoginPayload, AuthOkResult, AuthRegisterPayload, AuthUserProfile } from '../../shared/auth/UserAuthTypes';
+import { getBrowserCurrentUser, loginBrowserUser, logoutBrowserUser, registerBrowserUser } from './BrowserAuthStore';
 
 const CURRENT_USER_ENDPOINT = '/api/auth/current-user';
 const LOGIN_ENDPOINT = '/api/auth/login';
@@ -23,18 +24,18 @@ export async function getCurrentUserProfile(): Promise<AuthUserProfile | null> {
     return await fetchAuthJson<AuthUserProfile | null>(CURRENT_USER_ENDPOINT);
   } catch (caught) {
     if (caught instanceof AuthRequestError && caught.status === 404) {
-      return null;
+      return getBrowserCurrentUser();
     }
 
     if (caught instanceof ReferenceError) {
-      return null;
+      return getBrowserCurrentUser();
     }
 
     if (caught instanceof AuthRequestError) {
       throw caught;
     }
 
-    throw caught;
+    return getBrowserCurrentUser();
   }
 }
 
@@ -49,7 +50,7 @@ export async function loginUser(payload: AuthLoginPayload): Promise<AuthUserProf
     if (caught instanceof AuthRequestError && caught.status !== 404) {
       throw caught;
     }
-    throw new Error('认证服务不可用，请使用 Electron 或开发服务器运行。');
+    return loginBrowserUser(payload);
   }
 }
 
@@ -64,7 +65,7 @@ export async function registerUser(payload: AuthRegisterPayload): Promise<AuthUs
     if (caught instanceof AuthRequestError && caught.status !== 404) {
       throw caught;
     }
-    throw new Error('认证服务不可用，请使用 Electron 或开发服务器运行。');
+    return registerBrowserUser(payload);
   }
 }
 
@@ -79,7 +80,7 @@ export async function logoutUser(): Promise<AuthOkResult> {
     if (caught instanceof AuthRequestError && caught.status !== 404) {
       throw caught;
     }
-    return { ok: true };
+    return logoutBrowserUser();
   }
 }
 

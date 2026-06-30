@@ -2209,7 +2209,7 @@ describe('assistant flow', () => {
     await renderAuthenticatedApp();
 
     expect(screen.queryByText('桥接 API 不可用')).not.toBeInTheDocument();
-    expect(document.body.textContent).toContain('v0.0.2');
+    expect(document.body.textContent).toContain('v0.0.3');
 
     fireEvent.change(screen.getByLabelText('ASM 功能需求'), {
       target: { value: '生成一个精确 1ms 的 Timer0 中断工程。' }
@@ -2297,6 +2297,45 @@ describe('assistant flow', () => {
         method: 'POST'
       })
     );
+  });
+
+  it('falls back to local browser auth when preload and auth endpoints are unavailable', async () => {
+    vi.stubGlobal('asmAgent', undefined);
+    Object.defineProperty(window, 'asmAgent', {
+      configurable: true,
+      value: undefined
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('Failed to fetch');
+      })
+    );
+
+    render(<App />);
+
+    const loginPage = await screen.findByRole('main', { name: '用户登录' });
+    fireEvent.click(within(loginPage).getByRole('button', { name: '注册' }));
+    fireEvent.change(within(loginPage).getByLabelText('登录账号'), { target: { value: 'browser-user' } });
+    fireEvent.change(within(loginPage).getByLabelText('姓名'), { target: { value: 'Browser User' } });
+    fireEvent.change(within(loginPage).getByLabelText('岗位'), { target: { value: 'ASM 工程师' } });
+    fireEvent.change(within(loginPage).getByLabelText('设置密码'), { target: { value: 'secret123' } });
+    fireEvent.click(within(loginPage).getByRole('button', { name: '完成注册' }));
+
+    await waitFor(() => expect(screen.queryByRole('main', { name: '用户登录' })).not.toBeInTheDocument());
+    expect(screen.getByRole('region', { name: '当前用户信息' })).toHaveTextContent('Browser User');
+
+    fireEvent.click(screen.getByRole('button', { name: '设置' }));
+    const settings = screen.getByRole('dialog', { name: '设置' });
+    fireEvent.click(within(settings).getByRole('button', { name: '退出登录' }));
+
+    const reloginPage = await screen.findByRole('main', { name: '用户登录' });
+    fireEvent.change(within(reloginPage).getByLabelText('登录账号'), { target: { value: 'browser-user' } });
+    fireEvent.change(within(reloginPage).getByLabelText('登录密码'), { target: { value: 'secret123' } });
+    fireEvent.click(within(reloginPage).getByRole('button', { name: '登录' }));
+
+    await waitFor(() => expect(screen.queryByRole('main', { name: '用户登录' })).not.toBeInTheDocument());
+    expect(screen.getByRole('region', { name: '当前用户信息' })).toHaveTextContent('Browser User');
   });
 
   it('keeps direct model validation readable by hiding the raw model response and finalizing once', async () => {

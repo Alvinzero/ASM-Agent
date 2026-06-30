@@ -281,7 +281,7 @@ export function AssistantChat({ session, modelConfigState, onModelConfigStateCha
         <div className="chat-topbar-actions">
           <div className="topbar-utility-actions">
             <span className="topbar-version">
-              {session.apiVersion ? (session.apiVersion.startsWith('v') ? session.apiVersion : `v${session.apiVersion}`) : 'v0.0.2'}
+              {session.apiVersion ? (session.apiVersion.startsWith('v') ? session.apiVersion : `v${session.apiVersion}`) : 'v0.0.3'}
             </span>
           </div>
         </div>

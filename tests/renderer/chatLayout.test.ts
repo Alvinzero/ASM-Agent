@@ -183,7 +183,7 @@ describe('chat layout scrolling', () => {
         </nav>
         <div class="chat-topbar-actions">
           <div class="topbar-utility-actions">
-            <span class="topbar-version">v0.0.2</span>
+            <span class="topbar-version">v0.0.3</span>
           </div>
         </div>
       </header>
